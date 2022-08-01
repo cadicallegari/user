@@ -49,6 +49,7 @@ type Service interface {
 	Delete(context.Context, *User) error
 }
 
+//go:generate mockgen -package mock -mock_names Storage=Storage -destination mock/storage.go github.com/cadicallegari/user Storage
 type Storage interface {
 	List(context.Context, *ListOptions) (*List, error)
 	Get(_ context.Context, id string) (*User, error)
@@ -57,6 +58,7 @@ type Storage interface {
 	Delete(context.Context, *User) error
 }
 
+//go:generate mockgen -package mock -mock_names EventService=EventService -destination mock/event.go github.com/cadicallegari/user EventService
 type EventService interface {
 	UserCreated(context.Context, *User) error
 	UserUpdated(context.Context, *User) error
