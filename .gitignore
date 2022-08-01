@@ -13,3 +13,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+user
+!cmd/user
+coverage.out
+docker-compose.override.yml
