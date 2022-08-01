@@ -48,3 +48,17 @@ type Service interface {
 	Update(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
+
+type Storage interface {
+	List(context.Context, *ListOptions) (*List, error)
+	Get(_ context.Context, id string) (*User, error)
+	Create(context.Context, *User) (*User, error)
+	Update(context.Context, *User) (*User, error)
+	Delete(context.Context, *User) error
+}
+
+type EventService interface {
+	UserCreated(context.Context, *User) error
+	UserUpdated(context.Context, *User) error
+	UserDeleted(context.Context, *User) error
+}
