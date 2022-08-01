@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  user:
+    image: ghcr.io/cadicallegari/user:$version
+    build:
+      context: .
+      target: $target
+      args:
+        GIT_TAG: $GIT_TAG
+        GIT_COMMIT: $GIT_COMMIT
+    environment:
+      ENV: dev
+    networks:
+      - cadicallegari_network
+
+networks:
+  cadicallegari_network:
+    external: true
+
