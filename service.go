@@ -37,8 +37,18 @@ func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
 	return u, nil
 }
 
-func (s *service) Update(context.Context, *User) (*User, error) {
-	return nil, nil
+func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
+	u, err := s.storage.Update(ctx, usr)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.eventService.UserUpdated(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (s *service) Delete(context.Context, *User) error {
