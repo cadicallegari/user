@@ -24,8 +24,9 @@ type User struct {
 type ListOptions struct {
 	PerPage uint64 `schema:"per_page"`
 	Cursor  string `schema:"cursor"`
-	Role    string `schema:"role"`
-	Search  string `schema:"search"`
+	Country string `schema:"country"`
+	// Search is used for text search in some fields
+	Search string `schema:"search"`
 }
 
 func NewListOptions() *ListOptions {
@@ -43,7 +44,6 @@ type List struct {
 
 type Service interface {
 	List(context.Context, *ListOptions) (*List, error)
-	Get(_ context.Context, id string) (*User, error)
 	Create(context.Context, *User) (*User, error)
 	Update(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
@@ -52,7 +52,6 @@ type Service interface {
 //go:generate mockgen -package mock -mock_names Storage=Storage -destination mock/storage.go github.com/cadicallegari/user Storage
 type Storage interface {
 	List(context.Context, *ListOptions) (*List, error)
-	Get(_ context.Context, id string) (*User, error)
 	Create(context.Context, *User) (*User, error)
 	Update(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error

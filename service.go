@@ -14,13 +14,8 @@ func NewService(storage Storage, eventService EventService) *service {
 	}
 }
 
-func (s *service) List(context.Context, *ListOptions) (*List, error) {
-
-	return nil, nil
-}
-
-func (s *service) Get(_ context.Context, id string) (*User, error) {
-	return nil, nil
+func (s *service) List(ctx context.Context, opts *ListOptions) (*List, error) {
+	return s.storage.List(ctx, opts)
 }
 
 func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
@@ -51,6 +46,16 @@ func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
 	return u, nil
 }
 
-func (s *service) Delete(context.Context, *User) error {
+func (s *service) Delete(ctx context.Context, usr *User) error {
+	err := s.storage.Delete(ctx, usr)
+	if err != nil {
+		return err
+	}
+
+	err = s.eventService.UserDeleted(ctx, usr)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
