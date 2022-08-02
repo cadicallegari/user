@@ -19,13 +19,15 @@ func NewUserHandler(r chi.Router, userSvc user.Service) *UserHandler {
 		userSvc: userSvc,
 	}
 
-	r.Get("/v1/users", h.get)
-	r.Post("/v1/users", h.create)
-	r.Route("/v1/users/{id}", func(r chi.Router) {
-		// r = r.With(h.loadUser)
-		// r.Get("/", h.get)
-		r.Put("/", h.update)
-		r.Delete("/", h.delete)
+	r.Route("/v1/users", func(r chi.Router) {
+		r.Get("/", h.get)
+		r.Post("/", h.create)
+		r.Route("/v1/users/{id}", func(r chi.Router) {
+			// r = r.With(h.userCtx)
+			// r.Get("/", h.get)
+			r.Put("/", h.update)
+			r.Delete("/", h.delete)
+		})
 	})
 
 	return h

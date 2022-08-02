@@ -7,22 +7,22 @@ import (
 )
 
 type memStorage struct {
+	users map[string]*user.User
 }
 
 func NewStorage() *memStorage {
-	return &memStorage{}
+	return &memStorage{
+		users: make(map[string]*user.User),
+	}
 }
 
 func (s *memStorage) List(context.Context, *user.ListOptions) (*user.List, error) {
-
-	return nil, nil
-}
-
-func (s *memStorage) Get(_ context.Context, id string) (*user.User, error) {
-	return nil, nil
+	l := &user.List{}
+	return l, nil
 }
 
 func (s *memStorage) Create(context.Context, *user.User) (*user.User, error) {
+
 	return nil, nil
 }
 
