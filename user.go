@@ -2,11 +2,18 @@ package user
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
 const (
 	DefaultPerPage = 25
+)
+
+// TODO: it also could be moved to pkg/xerrors
+var (
+	ErrNotFound      = errors.New("user not found")
+	ErrAlreadyExists = errors.New("user already exists")
 )
 
 type User struct {
@@ -43,6 +50,7 @@ type List struct {
 }
 
 type Service interface {
+	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
 	Create(context.Context, *User) (*User, error)
 	Update(context.Context, *User) (*User, error)
@@ -51,6 +59,7 @@ type Service interface {
 
 //go:generate mockgen -package mock -mock_names Storage=Storage -destination mock/storage.go github.com/cadicallegari/user Storage
 type Storage interface {
+	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
 	Create(context.Context, *User) (*User, error)
 	Update(context.Context, *User) (*User, error)

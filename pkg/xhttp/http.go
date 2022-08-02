@@ -10,10 +10,31 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/schema"
 	"github.com/sirupsen/logrus"
 
 	"github.com/cadicallegari/user/pkg/xlogger"
 )
+
+var schemaDecoder = schema.NewDecoder()
+var DecodeQueryIgnoringUnknownKeys = true
+
+func init() {
+	schemaDecoder.IgnoreUnknownKeys(DecodeQueryIgnoringUnknownKeys)
+}
+
+func DecodeQuery(r *http.Request, v interface{}) error {
+	err := schemaDecoder.Decode(v, r.URL.Query())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func URLParam(r *http.Request, key string) string {
+	return chi.URLParam(r, key)
+}
 
 type ServerConfig struct {
 	Addr string `envconfig:"ADDR" default:"0.0.0.0:80"`
