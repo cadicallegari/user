@@ -130,7 +130,6 @@ func (h *UserHandler) loadUser(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		id := xhttp.URLParam(r, "id")
-		xlogger.Logger(ctx).Errorf("caralhoo %s", id)
 
 		u, err := h.userSrv.Get(ctx, id)
 		if err != nil {

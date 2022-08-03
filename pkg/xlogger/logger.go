@@ -6,6 +6,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type (
+	FieldLogger = logrus.FieldLogger
+)
+
 type contextKey struct {
 	key string
 }

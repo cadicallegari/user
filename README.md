@@ -5,6 +5,7 @@ user
 
 docker network create cadicallegari_network
 
+target=builder make build
 
 # HTTP example requests
 
@@ -27,6 +28,8 @@ docker network create cadicallegari_network
 - implement grpc interface??
 - add health check
 - delete user on post message failures and add text on the readme about it
+- implement some event broker integration
+- mention migrations dir
 
 - midlewares
     https://pkg.go.dev/github.com/go-chi/chi/middleware#CleanPath
