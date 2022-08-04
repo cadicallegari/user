@@ -92,7 +92,7 @@ func (s *UserStorageSuite) Test_Create() {
 	nickName := "nickName"
 	email := "email@mail.com"
 	encoded := "234kj;salkfj"
-	country := "country"
+	country := "DE"
 
 	u := user.User{
 		FirstName:       firstName,
