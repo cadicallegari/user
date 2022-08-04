@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"math"
 	"time"
 
@@ -94,9 +93,7 @@ func WaitOK(db *DB, errfn func(_ error, attempt int) bool) error {
 var ErrMigrationDisabled = errors.New("migrations is disabled")
 
 func Migration(driverName string, db *DB, cfg *Config) (version uint, dirty bool, err error) {
-	fmt.Printf("migrationnn %+v", cfg)
 	if !cfg.RunMigration || cfg.MigrationsDir == "" || cfg.MigrationDriverFn == nil {
-		fmt.Println("perereca")
 		return 0, false, ErrMigrationDisabled
 	}
 

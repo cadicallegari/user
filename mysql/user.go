@@ -49,6 +49,8 @@ func (s *UserStorage) Get(ctx context.Context, id string) (*user.User, error) {
 func (s *UserStorage) Create(_ context.Context, usr *user.User) (*user.User, error) {
 	if usr.ID == "" {
 		usr.ID = strconv.Itoa(len(s.users) + 1)
+		usr.CreatedAt = TimeNow()
+		usr.UpdatedAt = TimeNow()
 	}
 
 	s.users[usr.ID] = usr
