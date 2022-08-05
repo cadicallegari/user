@@ -79,7 +79,7 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 		return nil, err
 	}
 
-	return usr, nil
+	return s.Get(ctx, usr.ID)
 }
 
 func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.List, error) {
@@ -121,7 +121,34 @@ func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.L
 }
 
 func (s *UserStorage) Get(ctx context.Context, id string) (*user.User, error) {
-	return &user.User{}, nil
+	q := baseSelect.Where(sq.Eq{"u.id": id})
+
+	query, args := q.MustSql()
+
+	rows, err := s.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var u user.User
+
+	for rows.Next() {
+		err := rows.StructScan(&u)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if u.ID == "" {
+		return nil, user.ErrNotFound
+	}
+
+	return &u, nil
 }
 
 func (s *UserStorage) Update(_ context.Context, usr *user.User) (*user.User, error) {

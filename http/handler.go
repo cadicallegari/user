@@ -12,32 +12,30 @@ import (
 	"github.com/cadicallegari/user/pkg/xlogger"
 )
 
-// UserHandler implements http interface
 type UserHandler struct {
 	userSrv user.Service
 }
 
-// NewUserHandler set the http routes for user
 func NewUserHandler(r chi.Router, userSvc user.Service) *UserHandler {
 	h := &UserHandler{
 		userSrv: userSvc,
 	}
 
 	r.Route("/v1/users", func(r chi.Router) {
-		r.Get("/", h.list)
-		r.Post("/", h.create)
+		r.Get("/", h.List)
+		r.Post("/", h.Create)
 		r.Route("/{id}", func(r chi.Router) {
 			r = r.With(h.loadUser)
-			r.Get("/", h.get)
-			r.Put("/", h.update)
-			r.Delete("/", h.delete)
+			r.Get("/", h.Get)
+			r.Put("/", h.Update)
+			r.Delete("/", h.Delete)
 		})
 	})
 
 	return h
 }
 
-func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var usrReq *user.User
@@ -58,7 +56,7 @@ func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusCreated, u)
 }
 
-func (h *UserHandler) list(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	opts := user.NewListOptions()
@@ -79,7 +77,7 @@ func (h *UserHandler) list(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, list)
 }
 
-func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var usrReq *user.User
@@ -100,14 +98,14 @@ func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, u)
 }
 
-func (h *UserHandler) get(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	usr := ctx.Value(userCtxKey).(*user.User)
 
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, usr)
 }
 
-func (h *UserHandler) delete(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	usr := ctx.Value(userCtxKey).(*user.User)
 

@@ -104,6 +104,7 @@ func (s *UserStorageSuite) Test_Create() {
 	}
 
 	gotUser, err := s.storage.Save(s.ctx, &u)
+	fmt.Println(err)
 	if !s.NoError(err) {
 		s.T().FailNow()
 	}
@@ -121,10 +122,58 @@ func (s *UserStorageSuite) Test_Create() {
 	listResp, err := s.storage.List(s.ctx, &user.ListOptions{})
 	if s.NoError(err) && s.Len(listResp.Users, 1) {
 		u := listResp.Users[0]
-		s.Equal(u.ID, gotUser.ID)
+		s.Equal(gotUser.ID, u.ID)
+		s.Equal(firstName, u.FirstName)
+		s.Equal(lastname, u.LastName)
+		s.Equal(nickName, u.Nickname)
+		s.Equal(email, u.Email)
+	}
+}
+
+func (s *UserStorageSuite) Test_Get() {
+	firstName := "firstName"
+	lastname := "lastName"
+	nickName := "nickName"
+	email := "email@mail.com"
+	encoded := "234kj;salkfj"
+	country := "DE"
+
+	u := user.User{
+		FirstName:       firstName,
+		LastName:        lastname,
+		Nickname:        nickName,
+		Email:           email,
+		EncodedPassword: encoded,
+		Country:         country,
+	}
+
+	createdUser, err := s.storage.Save(s.ctx, &u)
+	if !s.NoError(err) {
+		s.T().FailNow()
+	}
+
+	s.NotEmpty(createdUser.ID)
+	s.False(createdUser.CreatedAt.IsZero())
+	s.False(createdUser.UpdatedAt.IsZero())
+	s.Equal(firstName, createdUser.FirstName)
+	s.Equal(lastname, createdUser.LastName)
+	s.Equal(nickName, createdUser.Nickname)
+	s.Equal(email, createdUser.Email)
+	s.Equal(encoded, createdUser.EncodedPassword)
+	s.Equal(country, createdUser.Country)
+
+	gotUser, err := s.storage.Get(s.ctx, createdUser.ID)
+	if s.NoError(err) {
+		s.Equal(createdUser.ID, gotUser.ID)
 		s.Equal(firstName, gotUser.FirstName)
 		s.Equal(lastname, gotUser.LastName)
 		s.Equal(nickName, gotUser.Nickname)
 		s.Equal(email, gotUser.Email)
 	}
+}
+
+func (s *UserStorageSuite) Test_Get_NotFound() {
+	got, err := s.storage.Get(s.ctx, "inexistent")
+	s.Nil(got)
+	s.ErrorIs(err, user.ErrNotFound)
 }

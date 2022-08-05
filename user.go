@@ -2,18 +2,17 @@ package user
 
 import (
 	"context"
-	"errors"
 	"time"
+
+	"github.com/cadicallegari/user/pkg/xerrors"
 )
 
 const (
 	DefaultPerPage = 25
 )
 
-// TODO: it also could be moved to pkg/xerrors
 var (
-	ErrNotFound      = errors.New("user not found")
-	ErrAlreadyExists = errors.New("user already exists")
+	ErrNotFound = xerrors.Newf(xerrors.NotFound, "user_not_found", "user was not found")
 )
 
 type User struct {
