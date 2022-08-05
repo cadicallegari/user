@@ -48,7 +48,7 @@ func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.userSrv.Create(ctx, usrReq)
+	u, err := h.userSrv.Save(ctx, usrReq)
 	if err != nil {
 		xlogger.Logger(ctx).WithError(err).Error("unable to save user")
 		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
@@ -90,7 +90,7 @@ func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.userSrv.Update(ctx, usrReq)
+	u, err := h.userSrv.Save(ctx, usrReq)
 	if err != nil {
 		xlogger.Logger(ctx).WithError(err).Error("unable to update user")
 		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)

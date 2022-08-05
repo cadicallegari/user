@@ -52,8 +52,7 @@ type List struct {
 type Service interface {
 	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
-	Create(context.Context, *User) (*User, error)
-	Update(context.Context, *User) (*User, error)
+	Save(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
 
@@ -61,8 +60,7 @@ type Service interface {
 type Storage interface {
 	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
-	Create(context.Context, *User) (*User, error)
-	Update(context.Context, *User) (*User, error)
+	Save(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
 

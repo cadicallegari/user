@@ -35,21 +35,6 @@ func (m *Storage) EXPECT() *StorageMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method.
-func (m *Storage) Create(arg0 context.Context, arg1 *user.User) (*user.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0, arg1)
-	ret0, _ := ret[0].(*user.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Create indicates an expected call of Create.
-func (mr *StorageMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*Storage)(nil).Create), arg0, arg1)
-}
-
 // Delete mocks base method.
 func (m *Storage) Delete(arg0 context.Context, arg1 *user.User) error {
 	m.ctrl.T.Helper()
@@ -94,17 +79,17 @@ func (mr *StorageMockRecorder) List(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*Storage)(nil).List), arg0, arg1)
 }
 
-// Update mocks base method.
-func (m *Storage) Update(arg0 context.Context, arg1 *user.User) (*user.User, error) {
+// Save mocks base method.
+func (m *Storage) Save(arg0 context.Context, arg1 *user.User) (*user.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0, arg1)
+	ret := m.ctrl.Call(m, "Save", arg0, arg1)
 	ret0, _ := ret[0].(*user.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Update indicates an expected call of Update.
-func (mr *StorageMockRecorder) Update(arg0, arg1 interface{}) *gomock.Call {
+// Save indicates an expected call of Save.
+func (mr *StorageMockRecorder) Save(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*Storage)(nil).Update), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*Storage)(nil).Save), arg0, arg1)
 }

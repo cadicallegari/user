@@ -22,8 +22,8 @@ func (s *service) Get(ctx context.Context, id string) (*User, error) {
 	return s.storage.Get(ctx, id)
 }
 
-func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
-	u, err := s.storage.Create(ctx, usr)
+func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
+	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
 }
 
 func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
-	u, err := s.storage.Update(ctx, usr)
+	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err
 	}

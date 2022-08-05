@@ -12,13 +12,25 @@ import (
 	"github.com/cadicallegari/user/pkg/xlogger"
 )
 
+type UserStorage struct {
+	db *sqlx.DB
+}
+
 var TimeNow = func() time.Time {
 	return time.Now().UTC()
 }
 
-type UserStorage struct {
-	db *sqlx.DB
-}
+var baseSelect = sq.Select(
+	"u.id",
+	"u.first_name",
+	"u.last_name",
+	"u.nickname",
+	"u.email",
+	"u.encoded_password",
+	"u.country",
+	"u.created_at",
+	"u.updated_at",
+).From("users u")
 
 func NewStorage(db *sqlx.DB) *UserStorage {
 	return &UserStorage{
@@ -26,7 +38,7 @@ func NewStorage(db *sqlx.DB) *UserStorage {
 	}
 }
 
-func (s *UserStorage) Create(ctx context.Context, usr *user.User) (*user.User, error) {
+func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, error) {
 	if usr.ID == "" {
 		usr.ID = uuid.NewString()
 	}
@@ -49,7 +61,14 @@ func (s *UserStorage) Create(ctx context.Context, usr *user.User) (*user.User, e
 			usr.Email,
 			usr.EncodedPassword,
 			usr.Country,
-		)
+		).
+		Suffix(`AS u ON DUPLICATE KEY UPDATE
+			first_name = u.first_name,
+			last_name = u.last_name,
+			nickname = u.nickname,
+			encoded_password = u.encoded_password,
+			country = u.country
+		`)
 
 	_, err := q.RunWith(s.db).ExecContext(ctx)
 	if err != nil {
@@ -64,20 +83,7 @@ func (s *UserStorage) Create(ctx context.Context, usr *user.User) (*user.User, e
 }
 
 func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.List, error) {
-	q := sq.
-		Select(
-			"u.id",
-			"u.first_name",
-			"u.last_name",
-			"u.nickname",
-			"u.email",
-			"u.encoded_password",
-			"u.country",
-			"u.created_at",
-			"u.updated_at",
-		).
-		From("users u").
-		OrderBy("email ASC")
+	q := baseSelect.OrderBy("email ASC")
 
 	// TODO: filter and paginate
 	query, args := q.MustSql()

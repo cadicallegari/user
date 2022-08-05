@@ -26,7 +26,7 @@ func Test_Create(t *testing.T) {
 
 	mockStorage := mock.NewStorage(ctrl)
 	mockStorage.EXPECT().
-		Create(gomock.Any(), usr).
+		Save(gomock.Any(), usr).
 		Return(usr, nil)
 
 	eventSvc := mock.NewEventService(ctrl)
@@ -36,7 +36,7 @@ func Test_Create(t *testing.T) {
 
 	svc := user.NewService(mockStorage, eventSvc)
 
-	gotUser, err := svc.Create(context.TODO(), usr)
+	gotUser, err := svc.Save(context.TODO(), usr)
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -63,7 +63,7 @@ func Test_Update(t *testing.T) {
 
 	mockStorage := mock.NewStorage(ctrl)
 	mockStorage.EXPECT().
-		Update(gomock.Any(), usr).
+		Save(gomock.Any(), usr).
 		Return(usr, nil)
 
 	eventSvc := mock.NewEventService(ctrl)

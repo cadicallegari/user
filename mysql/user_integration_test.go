@@ -103,7 +103,7 @@ func (s *UserStorageSuite) Test_Create() {
 		Country:         country,
 	}
 
-	gotUser, err := s.storage.Create(s.ctx, &u)
+	gotUser, err := s.storage.Save(s.ctx, &u)
 	if !s.NoError(err) {
 		s.T().FailNow()
 	}
