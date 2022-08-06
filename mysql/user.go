@@ -151,6 +151,17 @@ func (s *UserStorage) Get(ctx context.Context, id string) (*user.User, error) {
 	return &u, nil
 }
 
-func (s *UserStorage) Delete(_ context.Context, usr *user.User) error {
-	return nil
+func (s *UserStorage) Delete(ctx context.Context, usr *user.User) error {
+	q := sq.Delete("users").Where(sq.Eq{"id": usr.ID})
+
+	res, err := q.RunWith(s.db).ExecContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if n, _ := res.RowsAffected(); n == 0 {
+		err = user.ErrNotFound
+	}
+
+	return err
 }

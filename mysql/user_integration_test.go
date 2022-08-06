@@ -142,5 +142,32 @@ func (s *UserStorageSuite) Test_Update() {
 		s.Equal(got.Nickname, userToUpdate.Nickname)
 		s.Equal(got.Email, originalEmail)
 	}
+}
 
+func (s *UserStorageSuite) Test_Delete() {
+	originalUser := user.User{
+		FirstName:       "firstName",
+		LastName:        "lastName",
+		Nickname:        "nickName",
+		Email:           "email@mail.com",
+		EncodedPassword: "encoded",
+		Country:         "BR",
+	}
+	err := s.storage.Delete(s.ctx, &originalUser)
+	s.ErrorIs(err, user.ErrNotFound)
+
+	createdUser, err := s.storage.Save(s.ctx, &originalUser)
+	s.NoError(err)
+	s.NotEmpty(createdUser.ID)
+
+	got, err := s.storage.Get(s.ctx, createdUser.ID)
+	s.NoError(err)
+	s.Equal(got.ID, createdUser.ID)
+
+	err = s.storage.Delete(s.ctx, createdUser)
+	s.NoError(err)
+
+	got, err = s.storage.Get(s.ctx, createdUser.ID)
+	s.ErrorIs(err, user.ErrNotFound)
+	s.Nil(got)
 }
