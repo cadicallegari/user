@@ -1,9 +1,8 @@
 package xsql
 
 import (
-	"context"
-	"database/sql"
 	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -11,9 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/source"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
-
-	"github.com/cadicallegari/user/pkg/xdatabase"
-	"github.com/cadicallegari/user/pkg/xerrors"
 )
 
 type (
@@ -23,28 +19,6 @@ type (
 	Rows      = sqlx.Rows
 )
 
-type PrepareNamed interface {
-	PrepareNamed(string) (*NamedStmt, error)
-}
-
-type Execer interface {
-	sqlx.Execer
-	sqlx.ExecerContext
-	NamedExecContext(_ context.Context, query string, arg interface{}) (sql.Result, error)
-}
-
-type Queryer interface {
-	sqlx.Queryer
-	sqlx.QueryerContext
-	GetContext(_ context.Context, dest interface{}, query string, args ...interface{}) error
-	SelectContext(_ context.Context, dest interface{}, query string, args ...interface{}) error
-}
-
-type ExtContext interface {
-	Queryer
-	Execer
-}
-
 func Open(driverName string, cfg *Config) (*DB, error) {
 	if cfg == nil {
 		cfg = new(Config)
@@ -53,7 +27,7 @@ func Open(driverName string, cfg *Config) (*DB, error) {
 
 	db, err := sqlx.Open(driverName, cfg.URL)
 	if err != nil {
-		return nil, xdatabase.NewConnectionError(driverName, err)
+		return nil, fmt.Errorf("%s_connection_error unable to connect to %s: %w", driverName, driverName, err)
 	}
 
 	// set config values
@@ -99,18 +73,18 @@ func Migration(driverName string, db *DB, cfg *Config) (version uint, dirty bool
 
 	sourceDriver, err := source.Open(cfg.MigrationsDir)
 	if err != nil {
-		return 0, false, xerrors.Newf(xerrors.Internal, driverName+"_migration", "unable to create source driver: %w", err)
+		return 0, false, fmt.Errorf("%s_migration unable to create source driver %s: %w", driverName, driverName, err)
 	}
 	defer sourceDriver.Close()
 
 	migrationDriver, err := cfg.MigrationDriverFn(db)
 	if err != nil {
-		return 0, false, xerrors.Newf(xerrors.Internal, driverName+"_migration", "unable to create migration driver: %w", err)
+		return 0, false, fmt.Errorf("%s_migration unable to create migration driver: %w", driverName, err)
 	}
 
 	m, err := migrate.NewWithInstance("file", sourceDriver, driverName, migrationDriver)
 	if err != nil {
-		return 0, false, xerrors.Newf(xerrors.Internal, driverName+"_migration", "unable to create migration instance: %w", err)
+		return 0, false, fmt.Errorf("%s_migration unable to create migration instance: %w", driverName, err)
 	}
 
 	err = m.Up()

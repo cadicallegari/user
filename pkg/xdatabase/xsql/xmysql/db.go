@@ -1,6 +1,7 @@
 package xmysql
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-sql-driver/mysql"
@@ -34,7 +35,7 @@ func Connect(cfg *Config) (*xsql.DB, error) {
 
 	db, err := xsql.Open(DriverName, &cfg.Config)
 	if err != nil {
-		if ErrorNumber(err) == 1049 {
+		if errorNumber(err) == 1049 {
 			// if Error 1049: Unknown database
 			// create the database and try again
 			err := createDB(cfg.Config)
@@ -98,4 +99,12 @@ func createDB(cfg xsql.Config) error {
 		return err
 	}
 	return db.Close()
+}
+
+func errorNumber(err error) uint16 {
+	var merr *mysql.MySQLError
+	if errors.As(err, &merr) {
+		return merr.Number
+	}
+	return 0
 }

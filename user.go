@@ -2,9 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
 	"time"
-
-	"github.com/cadicallegari/user/pkg/xerrors"
 )
 
 const (
@@ -12,7 +11,7 @@ const (
 )
 
 var (
-	ErrNotFound = xerrors.Newf(xerrors.NotFound, "user_not_found", "user was not found")
+	ErrNotFound = errors.New("user_not_found")
 )
 
 type User struct {
