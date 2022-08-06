@@ -4,6 +4,7 @@ package mysql_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -170,4 +171,52 @@ func (s *UserStorageSuite) Test_Delete() {
 	got, err = s.storage.Get(s.ctx, createdUser.ID)
 	s.ErrorIs(err, user.ErrNotFound)
 	s.Nil(got)
+}
+
+func (s *UserStorageSuite) Test_List() {
+	users := s.createUsers([]string{
+		"DE", "DE", "BR", "UK", "UK", "UK", "ES", "PT",
+	})
+
+	lr, err := s.storage.List(s.ctx, &user.ListOptions{})
+	if s.NoError(err) {
+		s.Equal(len(users), int(lr.Total))
+	}
+
+	lr, err = s.storage.List(s.ctx, &user.ListOptions{
+		// PerPage: 5,
+		Country: "UK",
+	})
+	if s.NoError(err) {
+		s.Equal(3, int(lr.Total))
+	}
+
+	lr, err = s.storage.List(s.ctx, &user.ListOptions{
+		Search: "u5",
+	})
+	if s.NoError(err) {
+		s.Equal(1, int(lr.Total))
+	}
+}
+
+func (s *UserStorageSuite) createUsers(countries []string) []*user.User {
+	users := make([]*user.User, 0)
+
+	for i, country := range countries {
+		u, err := s.storage.Save(s.ctx, &user.User{
+			FirstName:       fmt.Sprintf("%d name %s", i, s.T().Name()),
+			LastName:        fmt.Sprintf("%d last %s", i, s.T().Name()),
+			Nickname:        fmt.Sprintf("%d nick %s", i, s.T().Name()),
+			Email:           fmt.Sprintf("u%d@%s", i, s.T().Name()),
+			EncodedPassword: fmt.Sprintf("encoded-%d", i),
+			Country:         country,
+		})
+
+		s.NoError(err)
+		s.NotEmpty(u.ID)
+
+		users = append(users, u)
+	}
+
+	return users
 }

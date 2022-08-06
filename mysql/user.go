@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -83,9 +84,25 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 }
 
 func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.List, error) {
-	q := baseSelect.OrderBy("email ASC")
+	if opts.PerPage == 0 {
+		opts.PerPage = user.DefaultPerPage
+	}
 
-	// TODO: filter and paginate
+	q := baseSelect.OrderBy("u.email ASC")
+
+	if opts.Country != "" {
+		q = q.Where(sq.Eq{"u.country": opts.Country})
+	}
+
+	if opts.Search != "" {
+		q = q.Where(sq.Or{
+			sq.Like{"u.first_name": fmt.Sprint("%", opts.Search, "%")},
+			sq.Like{"u.last_name": fmt.Sprint("%", opts.Search, "%")},
+			sq.Like{"u.nickname": fmt.Sprint("%", opts.Search, "%")},
+			sq.Like{"u.email": fmt.Sprint("%", opts.Search, "%")},
+		})
+	}
+
 	query, args := q.MustSql()
 
 	rows, err := s.db.QueryxContext(ctx, query, args...)
