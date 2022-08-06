@@ -9,5 +9,6 @@ CREATE TABLE `users` (
     `created_at` TIMESTAMP(6) NOT NULL DEFAULT current_timestamp(6),
     `updated_at` TIMESTAMP(6) NOT NULL DEFAULT current_timestamp(6) ON UPDATE current_timestamp(6),
     PRIMARY KEY (`id`),
+    UNIQUE (`email`),
     INDEX (`email`)
 ) ENGINE=InnoDB CHARSET=utf8 COLLATE utf8_general_ci;

@@ -18,7 +18,7 @@ type User struct {
 	ID              string    `json:"id"`
 	FirstName       string    `json:"first_name" db:"first_name"`
 	LastName        string    `json:"last_name" db:"last_name"`
-	Nickname        string    `json:"nickname"`
+	Nickname        string    `json:"nickname" db:"nickname"`
 	EncodedPassword string    `json:"password" db:"encoded_password"`
 	Email           string    `json:"email"`
 	Country         string    `json:"country"`

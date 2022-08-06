@@ -48,7 +48,8 @@ func (s *UserStorage) affectedRows(ctx context.Context, opts *user.ListOptions) 
 		var total uint64
 
 		q := buildFilterSelect(
-			sq.Select("COUNT(*)").From("users u"), opts,
+			sq.Select("COUNT(*)").From("users u"),
+			opts,
 		)
 
 		row := q.RunWith(s.db).QueryRowContext(ctx)
@@ -56,6 +57,7 @@ func (s *UserStorage) affectedRows(ctx context.Context, opts *user.ListOptions) 
 		if err != nil {
 			xlogger.Logger(ctx).
 				WithError(err).
+				WithField("query", sq.DebugSqlizer(q)).
 				Error("unable to get total of affected rows")
 		}
 
@@ -67,9 +69,7 @@ func (s *UserStorage) affectedRows(ctx context.Context, opts *user.ListOptions) 
 
 func buildFilterSelect(qOrigin sq.SelectBuilder, opts *user.ListOptions) sq.SelectBuilder {
 	q := qOrigin.
-		OrderBy("u.email ASC").
-		Limit(uint64(opts.PerPage) + 1).
-		Offset(uint64(opts.Page * opts.PerPage))
+		OrderBy("u.email ASC")
 
 	if opts.Country != "" {
 		q = q.Where(sq.Eq{"u.country": opts.Country})
@@ -89,7 +89,11 @@ func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.L
 
 	totalCh := s.affectedRows(ctx, opts)
 
-	q := buildFilterSelect(baseSelect, opts)
+	q := baseSelect.
+		Limit(uint64(opts.PerPage) + 1).
+		Offset(uint64(opts.Page * opts.PerPage))
+
+	q = buildFilterSelect(q, opts)
 
 	query, args := q.MustSql()
 
