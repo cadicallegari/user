@@ -10,9 +10,56 @@ services:
         GIT_TAG: $GIT_TAG
         GIT_COMMIT: $GIT_COMMIT
     environment:
-      ENV: dev
+      USER_MYSQL_MIGRATIONS_DIR: /etc/migrations
+      USER_MYSQL_URL: root:root@tcp(mysql:3306)/user?parseTime=true&multiStatements=true
+      USER_LOG_FORMATTER: type:text,disable_timestamp:true
+    command:
+      - sh
+      - -c
+      - |
+        user &
+        tail -f /dev/null
+    volumes:
+      - ./mysql/migrations:/etc/migrations
+      - .:/go/src/github.com/cadicallegari/user
+    ports:
+      - ${USER_MAPPED_PORT:-8080}:80
+
     networks:
       - cadicallegari_network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - mysql-logs:/var/log/mysql
+    networks:
+      - cadicallegari_network
+    healthcheck:
+      start_period: 30s
+      interval: 30s
+      timeout: 3s
+      retries: 6
+      test: MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin -h $$(hostname --ip-address) -u root ping || exit 1
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+    volumes:
+      - phpmyadmin-sessions:/sessions
+    networks:
+      - cadicallegari_network
+    ports:
+      - ${MYADMIN_PORT:-3006}:80
+
+volumes:
+  mysql-data:
+  mysql-logs:
+  phpmyadmin-sessions:
 
 networks:
   cadicallegari_network:

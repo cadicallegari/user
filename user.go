@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -9,16 +10,20 @@ const (
 	DefaultPerPage = 25
 )
 
+var (
+	ErrNotFound = errors.New("user_not_found")
+)
+
 type User struct {
-	ID        string    `json:"id"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Nickname  string    `json:"nickname"`
-	Password  string    `json:"password"`
-	Email     string    `json:"email"`
-	Country   string    `json:"country"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID              string    `json:"id"`
+	FirstName       string    `json:"first_name" db:"first_name"`
+	LastName        string    `json:"last_name" db:"last_name"`
+	Nickname        string    `json:"nickname"`
+	EncodedPassword string    `json:"password" db:"encoded_password"`
+	Email           string    `json:"email"`
+	Country         string    `json:"country"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type ListOptions struct {
@@ -43,17 +48,17 @@ type List struct {
 }
 
 type Service interface {
+	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
-	Create(context.Context, *User) (*User, error)
-	Update(context.Context, *User) (*User, error)
+	Save(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
 
 //go:generate mockgen -package mock -mock_names Storage=Storage -destination mock/storage.go github.com/cadicallegari/user Storage
 type Storage interface {
+	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
-	Create(context.Context, *User) (*User, error)
-	Update(context.Context, *User) (*User, error)
+	Save(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
 

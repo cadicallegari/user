@@ -1,5 +1,5 @@
 # Build image
-FROM golang:1.18-alpine AS builder
+FROM golang:1.19-alpine AS builder
 
 RUN apk update \
     && apk upgrade \
@@ -9,7 +9,8 @@ RUN apk update \
     git \
     libc-dev \
     make \
-    && update-ca-certificates
+    && update-ca-certificates \
+    && go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 WORKDIR $GOPATH/src/github.com/cadicallegari/user
 
@@ -28,7 +29,9 @@ RUN make go-install
 FROM alpine:3.16
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/src/github.com/cadicallegari/user/mysql/migrations /etc/migrations/
 COPY --from=builder /go/bin/user /usr/bin/
+COPY --from=builder /go/bin/migrate /usr/bin/
 
 EXPOSE 80
 

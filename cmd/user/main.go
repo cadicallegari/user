@@ -10,6 +10,8 @@ import (
 	"github.com/cadicallegari/user"
 	"github.com/cadicallegari/user/http"
 	"github.com/cadicallegari/user/mem"
+	"github.com/cadicallegari/user/mysql"
+	"github.com/cadicallegari/user/pkg/xdatabase/xsql/xmysql"
 	"github.com/cadicallegari/user/pkg/xhttp"
 	"github.com/cadicallegari/user/pkg/xsignal"
 )
@@ -22,7 +24,8 @@ var (
 )
 
 var cfg struct {
-	HTTP xhttp.ServerConfig `envconfig:"HTTP"`
+	HTTP  xhttp.ServerConfig `envconfig:"HTTP"`
+	MySQL xmysql.Config      `envconfig:"MYSQL"`
 }
 
 func main() {
@@ -34,8 +37,17 @@ func main() {
 	log := logger.WithFields(
 		logrus.Fields{"tag": tag, "git_commit": gitCommit},
 	)
+	cfg.MySQL.Logger = log
 
-	storage := mem.NewStorage()
+	db, err := xmysql.Connect(&cfg.MySQL)
+	if err != nil {
+		log.WithError(err).
+			Error("unable to connect to database")
+		return
+	}
+	defer db.Close()
+
+	storage := mysql.NewStorage(db)
 	eventSvc := mem.NewEventService()
 
 	userSrv := user.NewService(storage, eventSvc)
@@ -52,7 +64,7 @@ func main() {
 	)
 	log.Infof("running http server on: %s", httpSrv.Addr)
 
-	err := httpSrv.ListenAndServe()
+	err = httpSrv.ListenAndServe()
 	if err != nil {
 		log.WithError(err).Error("unable to run http server")
 		return

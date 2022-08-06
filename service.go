@@ -18,11 +18,17 @@ func (s *service) List(ctx context.Context, opts *ListOptions) (*List, error) {
 	return s.storage.List(ctx, opts)
 }
 
-func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
-	u, err := s.storage.Create(ctx, usr)
+func (s *service) Get(ctx context.Context, id string) (*User, error) {
+	return s.storage.Get(ctx, id)
+}
+
+func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
+	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: add something about dual write
 
 	err = s.eventService.UserCreated(ctx, u)
 	if err != nil {
@@ -33,10 +39,12 @@ func (s *service) Create(ctx context.Context, usr *User) (*User, error) {
 }
 
 func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
-	u, err := s.storage.Update(ctx, usr)
+	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: add something about dual write
 
 	err = s.eventService.UserUpdated(ctx, u)
 	if err != nil {
@@ -51,6 +59,8 @@ func (s *service) Delete(ctx context.Context, usr *User) error {
 	if err != nil {
 		return err
 	}
+
+	// TODO: add something about dual write
 
 	err = s.eventService.UserDeleted(ctx, usr)
 	if err != nil {

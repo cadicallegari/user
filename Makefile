@@ -4,8 +4,16 @@ help: ## Display this help
 	@ grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "    \033[36m%-16s\033[0m - %s\n", $$1, $$2}'
 	@ echo
 
+param-%:
+	@ if [ "${${*}}" = "" ]; then \
+		echo "Param \"$*\" is missing, use: make $(MAKECMDGOALS) $*=<value>"; \
+		exit 1; \
+	fi
+
 export version?=latest
 export COMPOSE_PROJECT_NAME=cadicallegari
+
+
 
 build: param-version ## Build the docker image
 	docker-compose build
@@ -13,19 +21,13 @@ build: param-version ## Build the docker image
 push: param-version ## Push the docker image to our private docker registry
 	docker-compose push
 
+# To be used internally or during the development
+
 up: ## Run the service on docker-compose locally
 	@docker-compose up -d
 
 down: ## Stop the service on docker-compose locally
 	@docker-compose down
-
-param-%:
-	@ if [ "${${*}}" = "" ]; then \
-		echo "Param \"$*\" is missing, use: make $(MAKECMDGOALS) $*=<value>"; \
-		exit 1; \
-	fi
-
-# To be used internally or during the development
 
 export GIT_TAG ?= $(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD)
 export GIT_COMMIT ?= $(shell git rev-parse --short HEAD)
