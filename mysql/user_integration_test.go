@@ -175,32 +175,80 @@ func (s *UserStorageSuite) Test_Delete() {
 
 func (s *UserStorageSuite) Test_List() {
 	users := s.createUsers([]string{
-		"DE", "DE", "BR", "UK", "UK", "UK", "ES", "PT",
+		"DE", "UK", "DE", "BR", "UK", "UK", "ES", "PT",
 	})
 
-	lr, err := s.storage.List(s.ctx, &user.ListOptions{})
-	if s.NoError(err) {
-		s.Equal(len(users), int(lr.Total))
-		s.Nil(lr.PrevPage)
-		s.Nil(lr.NextPage)
+	testCases := []struct {
+		Name          string
+		ListOptions   *user.ListOptions
+		WantTotal     int
+		WantPageUsers []*user.User
+		WantPrevPage  uint64
+		WantNextPage  uint64
+	}{
+		{
+			Name:          "empty_options",
+			ListOptions:   &user.ListOptions{},
+			WantPageUsers: users[:],
+			WantTotal:     8,
+		},
+		{
+			Name:          "first_page",
+			ListOptions:   &user.ListOptions{PerPage: 2},
+			WantPageUsers: users[:2],
+			WantTotal:     8,
+			WantNextPage:  1,
+		},
+		{
+			Name:          "second_page",
+			ListOptions:   &user.ListOptions{PerPage: 2, Page: 1},
+			WantPageUsers: users[2:4],
+			WantPrevPage:  0,
+			WantTotal:     8,
+			WantNextPage:  2,
+		},
+		{
+			Name:         "out_of_boud_page",
+			ListOptions:  &user.ListOptions{PerPage: 2, Page: 10},
+			WantTotal:    8,
+			WantPrevPage: 9,
+		},
+		{
+			Name:          "first_page_filter_by_country_uk",
+			ListOptions:   &user.ListOptions{PerPage: 2, Country: "UK"},
+			WantPageUsers: []*user.User{users[1], users[4]},
+			WantTotal:     3,
+			WantNextPage:  1,
+		},
+		{
+			Name:          "first_page_search",
+			ListOptions:   &user.ListOptions{PerPage: 2, Search: "u5"},
+			WantPageUsers: []*user.User{users[5]},
+			WantTotal:     1,
+		},
 	}
 
-	lr, err = s.storage.List(s.ctx, &user.ListOptions{
-		Country: "UK",
-	})
-	if s.NoError(err) {
-		s.Equal(3, int(lr.Total))
-		s.Nil(lr.PrevPage)
-		s.Nil(lr.NextPage)
-	}
+	for _, tc := range testCases {
+		tc := tc
+		s.Run(tc.Name, func() {
+			lr, err := s.storage.List(s.ctx, tc.ListOptions)
+			if s.NoError(err) {
+				s.Equal(tc.WantTotal, int(lr.Total))
 
-	lr, err = s.storage.List(s.ctx, &user.ListOptions{
-		Search: "u5",
-	})
-	if s.NoError(err) {
-		s.Equal(1, int(lr.Total))
-		s.Nil(lr.PrevPage)
-		s.Nil(lr.NextPage)
+				fmt.Println(tc.Name, lr)
+				if tc.WantNextPage != 0 {
+					s.Equal(tc.WantNextPage, *lr.NextPage)
+				}
+
+				if tc.WantPrevPage != 0 {
+					s.Equal(tc.WantPrevPage, *lr.PrevPage)
+				}
+
+				if s.Len(tc.WantPageUsers, len(lr.Users)) {
+					s.Equal(tc.WantPageUsers, lr.Users)
+				}
+			}
+		})
 	}
 }
 

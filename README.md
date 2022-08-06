@@ -26,7 +26,6 @@ target=builder make build
 - integration tests
     - db
     - http
-- handle unique email
 - encode passwd
 - add health check
 - delete user on post message failures and add text on the readme about it
