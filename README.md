@@ -23,9 +23,11 @@ target=builder make build
 
 
 ## TODO
-- encode passwd
+- move db test setup
 - integration tests
-- implement grpc interface??
+    - db
+    - http
+- encode passwd
 - add health check
 - delete user on post message failures and add text on the readme about it
 - implement some event broker integration

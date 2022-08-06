@@ -6,18 +6,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"os"
 	"testing"
-	"time"
 
-	mysqldriver "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
@@ -25,77 +21,37 @@ import (
 	userHttp "github.com/cadicallegari/user/http"
 	"github.com/cadicallegari/user/mem"
 	"github.com/cadicallegari/user/mysql"
-	"github.com/cadicallegari/user/pkg/xdatabase/xsql"
-	"github.com/cadicallegari/user/pkg/xdatabase/xsql/xmysql"
+	"github.com/cadicallegari/user/pkg/xdatabase/xsql/xmysqltest"
 	"github.com/cadicallegari/user/pkg/xhttp"
 	"github.com/cadicallegari/user/pkg/xlogger"
 )
 
-var debug = flag.Bool("debug", false, "do not remove the db used for the test")
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-
-	// To make the test easier let's fix a date
-	mysql.TimeNow = func() time.Time {
-		return time.Date(2022, time.June, 23, 0, 30, 0, 0, time.UTC)
-	}
-}
-
-type UserStorageSuite struct {
-	suite.Suite
-	db      *xsql.DB
-	dbName  string
+type HttpIntegrationTestSuite struct {
+	xmysqltest.MysqlTestSuite
 	storage *mysql.UserStorage
 	ctx     context.Context
 }
 
-func TestUserStorage(t *testing.T) {
-	suite.Run(t, new(UserStorageSuite))
+func TestHttpIntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new(HttpIntegrationTestSuite))
 }
 
-// TODO: move it to pkg
-func (s *UserStorageSuite) SetupTest() {
+func (s *HttpIntegrationTestSuite) SetupTest() {
 	mysqlURL := os.Getenv("USER_MYSQL_URL")
 	if mysqlURL == "" {
 		s.FailNow("envvar USER_MYSQL_URL is empty or missing")
 	}
-	mysqlCfg, err := mysqldriver.ParseDSN(mysqlURL)
-	if err != nil {
-		s.FailNow("unable to parse mysql url")
-	}
-	mysqlCfg.DBName += "-" + fmt.Sprint(rand.Int())
-	s.dbName = mysqlCfg.DBName
 
-	if *debug {
-		s.T().Logf("Using table %s", s.dbName)
-	}
+	s.MysqlTestSuite.SetupTest(mysqlURL, os.Getenv("USER_MYSQL_MIGRATIONS_DIR"))
 
-	cfg := &xmysql.Config{}
-	cfg.URL = mysqlCfg.FormatDSN()
-	cfg.MigrationsDir = os.Getenv("USER_MYSQL_MIGRATIONS_DIR")
-	cfg.RunMigration = true
-
-	s.db, err = xmysql.Connect(cfg)
-	if !s.NoError(err) {
-		s.FailNow("unable to connect to mysql")
-	}
-
-	s.storage = mysql.NewStorage(s.db)
+	s.storage = mysql.NewStorage(s.DB)
 
 	ctx := context.Background()
 	logger := logrus.StandardLogger()
 	s.ctx = xlogger.SetLogger(ctx, logger.WithField("test", "test"))
 }
 
-func (s *UserStorageSuite) TearDownTest() {
-	if !*debug {
-		s.db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS `%s`", s.dbName))
-	}
-	s.db.Close()
-}
-
-func (s *UserStorageSuite) Test_Create() {
+func (s *HttpIntegrationTestSuite) Test_Create() {
 	logger := logrus.StandardLogger()
 	logger.SetOutput(io.Discard)
 
@@ -133,7 +89,7 @@ func (s *UserStorageSuite) Test_Create() {
 	}
 }
 
-func (s *UserStorageSuite) Test_Get_NotFound() {
+func (s *HttpIntegrationTestSuite) Test_Get_NotFound() {
 	logger := logrus.StandardLogger()
 	logger.SetOutput(io.Discard)
 

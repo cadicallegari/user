@@ -29,6 +29,7 @@ type User struct {
 type ListOptions struct {
 	PerPage uint64 `schema:"per_page"`
 	Cursor  string `schema:"cursor"`
+
 	Country string `schema:"country"`
 	// Search is used for text search in some fields
 	Search string `schema:"search"`
