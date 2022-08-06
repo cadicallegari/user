@@ -151,10 +151,6 @@ func (s *UserStorage) Get(ctx context.Context, id string) (*user.User, error) {
 	return &u, nil
 }
 
-func (s *UserStorage) Update(_ context.Context, usr *user.User) (*user.User, error) {
-	return &user.User{}, nil
-}
-
 func (s *UserStorage) Delete(_ context.Context, usr *user.User) error {
 	return nil
 }

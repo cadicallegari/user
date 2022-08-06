@@ -23,7 +23,6 @@ target=builder make build
 
 
 ## TODO
-- move db test setup
 - integration tests
     - db
     - http

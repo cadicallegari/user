@@ -4,7 +4,6 @@ package mysql_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -42,6 +41,12 @@ func (s *UserStorageSuite) SetupTest() {
 	s.ctx = xlogger.SetLogger(ctx, logger.WithField("test", "test"))
 }
 
+func (s *UserStorageSuite) Test_Get_NotFound() {
+	got, err := s.storage.Get(s.ctx, "inexistent")
+	s.ErrorIs(err, user.ErrNotFound)
+	s.Nil(got)
+}
+
 func (s *UserStorageSuite) Test_Create() {
 	firstName := "firstName"
 	lastname := "lastName"
@@ -60,76 +65,82 @@ func (s *UserStorageSuite) Test_Create() {
 	}
 
 	gotUser, err := s.storage.Save(s.ctx, &u)
-	fmt.Println(err)
-	if !s.NoError(err) {
-		s.T().FailNow()
-	}
-
-	s.NotEmpty(gotUser.ID)
-	s.False(gotUser.CreatedAt.IsZero())
-	s.False(gotUser.UpdatedAt.IsZero())
-	s.Equal(firstName, gotUser.FirstName)
-	s.Equal(lastname, gotUser.LastName)
-	s.Equal(nickName, gotUser.Nickname)
-	s.Equal(email, gotUser.Email)
-	s.Equal(encoded, gotUser.EncodedPassword)
-	s.Equal(country, gotUser.Country)
-
-	listResp, err := s.storage.List(s.ctx, &user.ListOptions{})
-	if s.NoError(err) && s.Len(listResp.Users, 1) {
-		u := listResp.Users[0]
-		s.Equal(gotUser.ID, u.ID)
-		s.Equal(firstName, u.FirstName)
-		s.Equal(lastname, u.LastName)
-		s.Equal(nickName, u.Nickname)
-		s.Equal(email, u.Email)
-	}
-}
-
-func (s *UserStorageSuite) Test_Get() {
-	firstName := "firstName"
-	lastname := "lastName"
-	nickName := "nickName"
-	email := "email@mail.com"
-	encoded := "234kj;salkfj"
-	country := "DE"
-
-	u := user.User{
-		FirstName:       firstName,
-		LastName:        lastname,
-		Nickname:        nickName,
-		Email:           email,
-		EncodedPassword: encoded,
-		Country:         country,
-	}
-
-	createdUser, err := s.storage.Save(s.ctx, &u)
-	if !s.NoError(err) {
-		s.T().FailNow()
-	}
-
-	s.NotEmpty(createdUser.ID)
-	s.False(createdUser.CreatedAt.IsZero())
-	s.False(createdUser.UpdatedAt.IsZero())
-	s.Equal(firstName, createdUser.FirstName)
-	s.Equal(lastname, createdUser.LastName)
-	s.Equal(nickName, createdUser.Nickname)
-	s.Equal(email, createdUser.Email)
-	s.Equal(encoded, createdUser.EncodedPassword)
-	s.Equal(country, createdUser.Country)
-
-	gotUser, err := s.storage.Get(s.ctx, createdUser.ID)
 	if s.NoError(err) {
-		s.Equal(createdUser.ID, gotUser.ID)
+		s.NotEmpty(gotUser.ID)
+		s.False(gotUser.CreatedAt.IsZero())
+		s.False(gotUser.UpdatedAt.IsZero())
 		s.Equal(firstName, gotUser.FirstName)
 		s.Equal(lastname, gotUser.LastName)
 		s.Equal(nickName, gotUser.Nickname)
 		s.Equal(email, gotUser.Email)
+		s.Equal(encoded, gotUser.EncodedPassword)
+		s.Equal(country, gotUser.Country)
+	}
+
+	got, err := s.storage.Get(s.ctx, gotUser.ID)
+	if s.NoError(err) {
+		s.Equal(gotUser.ID, got.ID)
+		s.Equal(firstName, got.FirstName)
+		s.Equal(lastname, got.LastName)
+		s.Equal(nickName, got.Nickname)
+		s.Equal(email, got.Email)
 	}
 }
 
-func (s *UserStorageSuite) Test_Get_NotFound() {
-	got, err := s.storage.Get(s.ctx, "inexistent")
-	s.Nil(got)
-	s.ErrorIs(err, user.ErrNotFound)
+func (s *UserStorageSuite) Test_Update() {
+	originalEmail := "email@mail.com"
+	originalUser := user.User{
+		FirstName:       "firstName",
+		LastName:        "lastName",
+		Nickname:        "nickName",
+		Email:           originalEmail,
+		EncodedPassword: "encoded",
+		Country:         "BR",
+	}
+
+	gotUser, err := s.storage.Save(s.ctx, &originalUser)
+	if s.NoError(err) {
+		s.NotEmpty(gotUser.ID)
+		s.Equal(gotUser.FirstName, originalUser.FirstName)
+		s.Equal(gotUser.LastName, originalUser.LastName)
+		s.Equal(gotUser.Nickname, originalUser.Nickname)
+		s.Equal(gotUser.Email, originalEmail)
+		s.Equal(gotUser.EncodedPassword, originalUser.EncodedPassword)
+		s.Equal(gotUser.Country, originalUser.Country)
+		s.False(gotUser.CreatedAt.IsZero())
+		s.False(gotUser.UpdatedAt.IsZero())
+	}
+
+	userToUpdate := user.User{
+		ID:              gotUser.ID,
+		FirstName:       "updated firstName",
+		LastName:        "updated lastName",
+		Nickname:        "updated nickname",
+		EncodedPassword: "updated encoded",
+		Email:           "email_is_not@updated.com",
+		Country:         "DE",
+	}
+
+	gotUser, err = s.storage.Save(s.ctx, &userToUpdate)
+	if s.NoError(err) {
+		s.Equal(gotUser.ID, userToUpdate.ID)
+		s.Equal(gotUser.FirstName, userToUpdate.FirstName)
+		s.Equal(gotUser.LastName, userToUpdate.LastName)
+		s.Equal(gotUser.Nickname, userToUpdate.Nickname)
+		s.Equal(gotUser.Email, originalEmail)
+		s.Equal(gotUser.EncodedPassword, userToUpdate.EncodedPassword)
+		s.Equal(gotUser.Country, userToUpdate.Country)
+		s.False(gotUser.UpdatedAt.IsZero())
+		s.False(gotUser.CreatedAt.IsZero())
+	}
+
+	got, err := s.storage.Get(s.ctx, gotUser.ID)
+	if s.NoError(err) {
+		s.Equal(got.ID, userToUpdate.ID)
+		s.Equal(got.FirstName, userToUpdate.FirstName)
+		s.Equal(got.LastName, userToUpdate.LastName)
+		s.Equal(got.Nickname, userToUpdate.Nickname)
+		s.Equal(got.Email, originalEmail)
+	}
+
 }
