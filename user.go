@@ -27,11 +27,11 @@ type User struct {
 }
 
 type ListOptions struct {
+	Page    uint64 `schema:"page"`
 	PerPage uint64 `schema:"per_page"`
-	Cursor  string `schema:"cursor"`
 
 	Country string `schema:"country"`
-	// Search is used for text search in some fields
+	// Search is used for text search in the email field for now
 	Search string `schema:"search"`
 }
 
@@ -42,10 +42,10 @@ func NewListOptions() *ListOptions {
 }
 
 type List struct {
-	Users      []*User `json:"users"`
-	Total      uint64  `json:"total"`
-	PrevCursor *string `json:"prev_cursor"`
-	NextCursor *string `json:"next_cursor"`
+	Users    []*User `json:"users"`
+	Total    uint64  `json:"total"`
+	PrevPage *uint64 `json:"prev_page"`
+	NextPage *uint64 `json:"next_page"`
 }
 
 type Service interface {

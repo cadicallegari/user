@@ -181,14 +181,17 @@ func (s *UserStorageSuite) Test_List() {
 	lr, err := s.storage.List(s.ctx, &user.ListOptions{})
 	if s.NoError(err) {
 		s.Equal(len(users), int(lr.Total))
+		s.Nil(lr.PrevPage)
+		s.Nil(lr.NextPage)
 	}
 
 	lr, err = s.storage.List(s.ctx, &user.ListOptions{
-		// PerPage: 5,
 		Country: "UK",
 	})
 	if s.NoError(err) {
 		s.Equal(3, int(lr.Total))
+		s.Nil(lr.PrevPage)
+		s.Nil(lr.NextPage)
 	}
 
 	lr, err = s.storage.List(s.ctx, &user.ListOptions{
@@ -196,6 +199,26 @@ func (s *UserStorageSuite) Test_List() {
 	})
 	if s.NoError(err) {
 		s.Equal(1, int(lr.Total))
+		s.Nil(lr.PrevPage)
+		s.Nil(lr.NextPage)
+	}
+}
+
+func (s *UserStorageSuite) Test_List_Pagination() {
+	users := s.createUsers([]string{
+		"DE", "DE", "BR", "UK", "UK", "UK", "ES", "PT",
+	})
+
+	_ = users
+
+	lr, err := s.storage.List(s.ctx, &user.ListOptions{
+		PerPage: 1,
+	})
+	if s.NoError(err) {
+		s.Equal(8, int(lr.Total))
+		s.Len((lr.Users), 1)
+		s.Nil(lr.PrevPage)
+		s.NotNil(lr.NextPage)
 	}
 }
 

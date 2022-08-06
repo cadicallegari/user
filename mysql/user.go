@@ -39,6 +39,102 @@ func NewStorage(db *sqlx.DB) *UserStorage {
 	}
 }
 
+func (s *UserStorage) affectedRows(ctx context.Context, opts *user.ListOptions) chan uint64 {
+	totalCh := make(chan uint64)
+
+	go func() {
+		defer close(totalCh)
+
+		var total uint64
+
+		q := buildFilterSelect(
+			sq.Select("COUNT(*)").From("users u"), opts,
+		)
+
+		row := q.RunWith(s.db).QueryRowContext(ctx)
+		err := row.Scan(&total)
+		if err != nil {
+			xlogger.Logger(ctx).
+				WithError(err).
+				Error("unable to get total of affected rows")
+		}
+
+		totalCh <- total
+	}()
+
+	return totalCh
+}
+
+func buildFilterSelect(qOrigin sq.SelectBuilder, opts *user.ListOptions) sq.SelectBuilder {
+	q := qOrigin.
+		OrderBy("u.email ASC").
+		Limit(uint64(opts.PerPage) + 1).
+		Offset(uint64(opts.Page * opts.PerPage))
+
+	if opts.Country != "" {
+		q = q.Where(sq.Eq{"u.country": opts.Country})
+	}
+
+	if opts.Search != "" {
+		q = q.Where(sq.Like{"u.email": fmt.Sprint("%", opts.Search, "%")})
+	}
+
+	return q
+}
+
+func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.List, error) {
+	if opts.PerPage == 0 {
+		opts.PerPage = user.DefaultPerPage
+	}
+
+	totalCh := s.affectedRows(ctx, opts)
+
+	q := buildFilterSelect(baseSelect, opts)
+
+	query, args := q.MustSql()
+
+	rows, err := s.db.QueryxContext(ctx, query, args...)
+	if err != nil {
+		xlogger.Logger(ctx).
+			WithField("query", sq.DebugSqlizer(q)).
+			WithError(err).
+			Error("unable to get users")
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := new(user.List)
+
+	for rows.Next() {
+		var u user.User
+		err := rows.StructScan(&u)
+		if err != nil {
+			return nil, err
+		}
+
+		list.Users = append(list.Users, &u)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	list.Total = <-totalCh
+
+	if opts.Page > 0 {
+		prev := opts.Page - 1
+		list.PrevPage = &prev
+	}
+
+	if len(list.Users) > int(opts.PerPage) {
+		next := opts.Page + 1
+		list.NextPage = &next
+		list.Users = list.Users[:len(list.Users)-1]
+	}
+
+	return list, nil
+}
+
 func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, error) {
 	if usr.ID == "" {
 		usr.ID = uuid.NewString()
@@ -81,60 +177,6 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 	}
 
 	return s.Get(ctx, usr.ID)
-}
-
-func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.List, error) {
-	if opts.PerPage == 0 {
-		opts.PerPage = user.DefaultPerPage
-	}
-
-	q := baseSelect.OrderBy("u.email ASC")
-
-	if opts.Country != "" {
-		q = q.Where(sq.Eq{"u.country": opts.Country})
-	}
-
-	if opts.Search != "" {
-		q = q.Where(sq.Or{
-			sq.Like{"u.first_name": fmt.Sprint("%", opts.Search, "%")},
-			sq.Like{"u.last_name": fmt.Sprint("%", opts.Search, "%")},
-			sq.Like{"u.nickname": fmt.Sprint("%", opts.Search, "%")},
-			sq.Like{"u.email": fmt.Sprint("%", opts.Search, "%")},
-		})
-	}
-
-	query, args := q.MustSql()
-
-	rows, err := s.db.QueryxContext(ctx, query, args...)
-	if err != nil {
-		xlogger.Logger(ctx).
-			WithField("query", sq.DebugSqlizer(q)).
-			WithError(err).
-			Error("unable to get users")
-		return nil, err
-	}
-	defer rows.Close()
-
-	us := make([]*user.User, 0)
-
-	for rows.Next() {
-		var u user.User
-		err := rows.StructScan(&u)
-		if err != nil {
-			return nil, err
-		}
-
-		us = append(us, &u)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return &user.List{
-		Users: us,
-		Total: uint64(len(us)),
-	}, nil
 }
 
 func (s *UserStorage) Get(ctx context.Context, id string) (*user.User, error) {
