@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -22,20 +23,20 @@ func NewUserHandler(r chi.Router, userSvc user.Service) *UserHandler {
 	}
 
 	r.Route("/v1/users", func(r chi.Router) {
-		r.Get("/", h.List)
-		r.Post("/", h.Create)
+		r.Get("/", h.list)
+		r.Post("/", h.create)
 		r.Route("/{id}", func(r chi.Router) {
 			r = r.With(h.loadUser)
-			r.Get("/", h.Get)
-			r.Put("/", h.Update)
-			r.Delete("/", h.Delete)
+			r.Get("/", h.get)
+			r.Put("/", h.update)
+			r.Delete("/", h.delete)
 		})
 	})
 
 	return h
 }
 
-func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var usrReq *user.User
@@ -56,7 +57,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusCreated, u)
 }
 
-func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	opts := user.NewListOptions()
@@ -77,7 +78,7 @@ func (h *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, list)
 }
 
-func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var usrReq *user.User
@@ -98,14 +99,14 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, u)
 }
 
-func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	usr := ctx.Value(userCtxKey).(*user.User)
 
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, usr)
 }
 
-func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	usr := ctx.Value(userCtxKey).(*user.User)
 
@@ -130,6 +131,9 @@ func (h *UserHandler) loadUser(next http.Handler) http.Handler {
 		id := xhttp.URLParam(r, "id")
 
 		u, err := h.userSrv.Get(ctx, id)
+		if errors.Is(err, user.ErrNotFound) {
+			xhttp.ResponseWithStatus(ctx, w, http.StatusNotFound, nil)
+		}
 		if err != nil {
 			xlogger.Logger(ctx).WithError(err).Error("unable to fetch user")
 			xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)

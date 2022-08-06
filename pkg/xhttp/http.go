@@ -23,19 +23,6 @@ func init() {
 	schemaDecoder.IgnoreUnknownKeys(DecodeQueryIgnoringUnknownKeys)
 }
 
-func DecodeQuery(r *http.Request, v interface{}) error {
-	err := schemaDecoder.Decode(v, r.URL.Query())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func URLParam(r *http.Request, key string) string {
-	return chi.URLParam(r, key)
-}
-
 type ServerConfig struct {
 	Addr string `envconfig:"ADDR" default:"0.0.0.0:80"`
 }
@@ -180,6 +167,19 @@ func setLoggerResponseFields(log *logrus.Entry, status, bytes int, elapsed time.
 	}
 
 	return log.WithFields(fields)
+}
+
+func DecodeQuery(r *http.Request, v interface{}) error {
+	err := schemaDecoder.Decode(v, r.URL.Query())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func URLParam(r *http.Request, key string) string {
+	return chi.URLParam(r, key)
 }
 
 var (

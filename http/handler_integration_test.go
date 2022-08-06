@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"os"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cadicallegari/user"
-	userHTTP "github.com/cadicallegari/user/http"
+	userHttp "github.com/cadicallegari/user/http"
 	"github.com/cadicallegari/user/mem"
 	"github.com/cadicallegari/user/mysql"
 	"github.com/cadicallegari/user/pkg/xdatabase/xsql"
@@ -104,7 +105,7 @@ func (s *UserStorageSuite) Test_Create() {
 	svc := user.NewService(s.storage, mem.NewEventService())
 	r := xhttp.NewRouter(log)
 
-	handler := userHTTP.NewUserHandler(r, svc)
+	_ = userHttp.NewUserHandler(r, svc)
 
 	buf, err := json.Marshal(user.User{
 		FirstName: "first name",
@@ -114,7 +115,7 @@ func (s *UserStorageSuite) Test_Create() {
 		s.T().Fatalf("unable to marshal bid %q", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "/v1/bids", bytes.NewBuffer(buf))
+	req, err := http.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(buf))
 	if err != nil {
 		s.T().Fatalf("unable to create request %q", err)
 	}
@@ -122,16 +123,14 @@ func (s *UserStorageSuite) Test_Create() {
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
-	handler.Create(w, req)
+	r.ServeHTTP(w, req)
 
 	resp := w.Result()
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		s.T().Fatalf("got %d status creating bid, want %d", resp.StatusCode, http.StatusCreated)
+		s.T().Fatalf("got %d status creating user, want %d", resp.StatusCode, http.StatusCreated)
 	}
-
-	fmt.Println("caralhooo")
 }
 
 func (s *UserStorageSuite) Test_Get_NotFound() {
@@ -144,7 +143,7 @@ func (s *UserStorageSuite) Test_Get_NotFound() {
 	svc := user.NewService(s.storage, mem.NewEventService())
 	r := xhttp.NewRouter(log)
 
-	handler := userHTTP.NewUserHandler(r, svc)
+	_ = userHttp.NewUserHandler(r, svc)
 
 	req, err := http.NewRequest(http.MethodGet, "/v1/users/notfound", nil)
 	if err != nil {
@@ -154,12 +153,20 @@ func (s *UserStorageSuite) Test_Get_NotFound() {
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
-	handler.Get(w, req)
+	r.ServeHTTP(w, req)
 
 	resp := w.Result()
 	defer resp.Body.Close()
 
+	respDump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("RESPONSE:\n%s", string(respDump))
+
 	if resp.StatusCode != http.StatusNotFound {
-		s.T().Fatalf("got %d status creating bid, want %d", resp.StatusCode, http.StatusNotFound)
+		fmt.Println()
+		s.T().Fatalf("got %d status creating user, want %d", resp.StatusCode, http.StatusNotFound)
 	}
 }
