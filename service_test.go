@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/cadicallegari/user"
 	"github.com/cadicallegari/user/mock"
@@ -18,13 +19,16 @@ func Test_Create(t *testing.T) {
 		FirstName: "first",
 		LastName:  "last",
 		Nickname:  "nick",
-		// TODO: encode password
-		// Password  "passwd"
-		Email:   "email",
-		Country: "DE",
+		Password:  "passwd",
+		Email:     "email",
+		Country:   "DE",
 	}
 
 	mockStorage := mock.NewStorage(ctrl)
+	mockStorage.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: usr.Email}).
+		Return(&user.List{}, nil)
+
 	mockStorage.EXPECT().
 		Save(gomock.Any(), usr).
 		Return(usr, nil)
@@ -34,17 +38,41 @@ func Test_Create(t *testing.T) {
 		UserCreated(gomock.Any(), usr).
 		Return(nil)
 
-	svc := user.NewService(mockStorage, eventSvc)
+	svc := user.NewService(mockStorage, eventSvc, 5)
 
 	gotUser, err := svc.Save(context.TODO(), usr)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
+	require.NoError(t, err)
+	require.Equal(t, usr, gotUser)
+}
+
+func Test_Create_AlreadyExists(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	usr := &user.User{
+		FirstName: "first",
+		LastName:  "last",
+		Nickname:  "nick",
+		Password:  "passwd",
+		Email:     "email",
+		Country:   "DE",
 	}
 
-	// TODO: improve asserts
-	if gotUser == nil {
-		t.Fatal("got nil user")
-	}
+	mockStorage := mock.NewStorage(ctrl)
+	mockStorage.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: usr.Email}).
+		Return(&user.List{
+			Total: uint64(1),
+			Users: []*user.User{usr},
+		}, nil)
+
+	eventSvc := mock.NewEventService(ctrl)
+
+	svc := user.NewService(mockStorage, eventSvc, 5)
+
+	gotUser, err := svc.Save(context.TODO(), usr)
+	require.ErrorIs(t, err, user.ErrAlreadyExists)
+	require.Nil(t, gotUser)
 }
 
 func Test_Update(t *testing.T) {
@@ -55,10 +83,9 @@ func Test_Update(t *testing.T) {
 		FirstName: "first",
 		LastName:  "last",
 		Nickname:  "nick",
-		// TODO: encode password
-		// Password  "passwd"
-		Email:   "email",
-		Country: "DE",
+		Password:  "passwd",
+		Email:     "email",
+		Country:   "DE",
 	}
 
 	mockStorage := mock.NewStorage(ctrl)
@@ -71,17 +98,11 @@ func Test_Update(t *testing.T) {
 		UserUpdated(gomock.Any(), usr).
 		Return(nil)
 
-	svc := user.NewService(mockStorage, eventSvc)
+	svc := user.NewService(mockStorage, eventSvc, 5)
 
 	gotUser, err := svc.Update(context.TODO(), usr)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	// TODO: improve asserts
-	if gotUser == nil {
-		t.Fatal("got nil user")
-	}
+	require.NoError(t, err)
+	require.Equal(t, usr, gotUser)
 }
 
 func Test_Delete(t *testing.T) {
@@ -92,9 +113,7 @@ func Test_Delete(t *testing.T) {
 		FirstName: "first",
 		LastName:  "last",
 		Nickname:  "nick",
-		// TODO: encode password
-		// Password  "passwd"
-		Email:   "email",
+		Password:  "passwd", Email: "email",
 		Country: "DE",
 	}
 
@@ -108,12 +127,10 @@ func Test_Delete(t *testing.T) {
 		UserDeleted(gomock.Any(), usr).
 		Return(nil)
 
-	svc := user.NewService(mockStorage, eventSvc)
+	svc := user.NewService(mockStorage, eventSvc, 5)
 
 	err := svc.Delete(context.TODO(), usr)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
+	require.NoError(t, err)
 }
 
 func Test_List(t *testing.T) {
@@ -126,10 +143,9 @@ func Test_List(t *testing.T) {
 				FirstName: "first",
 				LastName:  "last",
 				Nickname:  "nick",
-				// TODO: encode password
-				// Password  "passwd"
-				Email:   "email",
-				Country: "DE",
+				Email:     "email",
+				Password:  "passwd",
+				Country:   "DE",
 			},
 		},
 		Total: 1,
@@ -142,14 +158,9 @@ func Test_List(t *testing.T) {
 		List(gomock.Any(), opts).
 		Return(l, nil)
 
-	svc := user.NewService(mockStorage, mock.NewEventService(ctrl))
+	svc := user.NewService(mockStorage, mock.NewEventService(ctrl), 5)
 
 	gotList, err := svc.List(context.TODO(), opts)
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
-	}
-
-	if gotList.Total != 1 {
-		t.Fatalf("total = %d, want 1", gotList.Total)
-	}
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), gotList.Total)
 }

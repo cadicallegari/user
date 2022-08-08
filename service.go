@@ -1,17 +1,30 @@
 package user
 
-import "context"
+import (
+	"context"
+
+	"golang.org/x/crypto/bcrypt"
+)
 
 type service struct {
 	storage      Storage
 	eventService EventService
+
+	passwordCost int
 }
 
-func NewService(storage Storage, eventService EventService) *service {
+func NewService(storage Storage, eventService EventService, passwordCost int) *service {
 	return &service{
 		storage:      storage,
 		eventService: eventService,
+		passwordCost: passwordCost,
 	}
+}
+
+func (s *service) encryptPassword(passwd string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(passwd), s.passwordCost)
+
+	return string(bytes), err
 }
 
 func (s *service) List(ctx context.Context, opts *ListOptions) (*List, error) {
@@ -23,6 +36,25 @@ func (s *service) Get(ctx context.Context, id string) (*User, error) {
 }
 
 func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
+
+	l, err := s.List(ctx, &ListOptions{Search: usr.Email})
+	if err != nil {
+		return nil, err
+	}
+
+	if l.Total > 0 {
+		return nil, ErrAlreadyExists
+	}
+
+	if usr.Password != "" {
+		encoded, err := s.encryptPassword(usr.Password)
+		if err != nil {
+			return nil, ErrInvalid
+		}
+		usr.EncodedPassword = encoded
+		usr.Password = ""
+	}
+
 	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err
@@ -39,6 +71,15 @@ func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
 }
 
 func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
+	if usr.Password != "" {
+		encoded, err := s.encryptPassword(usr.Password)
+		if err != nil {
+			return nil, ErrInvalid
+		}
+		usr.EncodedPassword = encoded
+		usr.Password = ""
+	}
+
 	u, err := s.storage.Save(ctx, usr)
 	if err != nil {
 		return nil, err

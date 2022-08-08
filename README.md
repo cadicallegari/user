@@ -23,12 +23,10 @@ target=builder make build
 
 
 ## TODO
-- encode passwd
 - add health check
-- delete user on post message failures and add text on the readme about it
+- dual write problem
 - implement some event broker integration
 - mention migrations dir
-- dual write problem
 
 - midlewares
     https://pkg.go.dev/github.com/go-chi/chi/middleware#CleanPath

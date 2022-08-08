@@ -11,8 +11,9 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("not_found")
-	ErrInvalid  = errors.New("invalid")
+	ErrNotFound      = errors.New("not_found")
+	ErrInvalid       = errors.New("invalid")
+	ErrAlreadyExists = errors.New("already exists")
 )
 
 type User struct {
@@ -20,7 +21,8 @@ type User struct {
 	FirstName       string    `json:"first_name" db:"first_name"`
 	LastName        string    `json:"last_name" db:"last_name"`
 	Nickname        string    `json:"nickname" db:"nickname"`
-	EncodedPassword string    `json:"password" db:"encoded_password"`
+	Password        string    `json:"password,omitempty"`
+	EncodedPassword string    `json:"-" db:"encoded_password"`
 	Email           string    `json:"email"`
 	Country         string    `json:"country"`
 	CreatedAt       time.Time `json:"created_at" db:"created_at"`

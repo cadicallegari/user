@@ -41,7 +41,7 @@ func serviceWithMocks(t *testing.T, ctrl *gomock.Controller) userTestSuite {
 	s.storageMock = mock.NewStorage(ctrl)
 	s.eventMock = mock.NewEventService(ctrl)
 
-	s.svc = user.NewService(s.storageMock, s.eventMock)
+	s.svc = user.NewService(s.storageMock, s.eventMock, 4)
 
 	s.router = xhttp.NewRouter(s.log)
 
@@ -61,6 +61,10 @@ func Test_Create(t *testing.T) {
 		FirstName: "first name",
 		Email:     "email",
 	}
+
+	suite.storageMock.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: u.Email}).
+		Return(&user.List{}, nil)
 
 	suite.storageMock.EXPECT().
 		Save(gomock.Any(), u).
@@ -99,6 +103,10 @@ func Test_Create_SaveError(t *testing.T) {
 	}
 
 	suite.storageMock.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: u.Email}).
+		Return(&user.List{}, nil)
+
+	suite.storageMock.EXPECT().
 		Save(gomock.Any(), u).
 		Return(nil, errors.New("any error"))
 
@@ -131,6 +139,10 @@ func Test_Create_SendEventError(t *testing.T) {
 	}
 
 	suite.storageMock.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: u.Email}).
+		Return(&user.List{}, nil)
+
+	suite.storageMock.EXPECT().
 		Save(gomock.Any(), u).
 		Return(u, nil)
 
@@ -153,6 +165,41 @@ func Test_Create_SendEventError(t *testing.T) {
 	defer resp.Body.Close()
 
 	require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+func Test_Create_AlreadyExists(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	suite := serviceWithMocks(t, ctrl)
+
+	u := &user.User{
+		FirstName: "first name",
+		Email:     "email",
+	}
+
+	suite.storageMock.EXPECT().
+		List(gomock.Any(), &user.ListOptions{Search: u.Email}).
+		Return(&user.List{
+			Total: uint64(1),
+			Users: []*user.User{u},
+		}, nil)
+
+	buf, err := json.Marshal(u)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(buf))
+	require.NoError(t, err)
+
+	req = req.WithContext(suite.ctx)
+	w := httptest.NewRecorder()
+
+	suite.router.ServeHTTP(w, req)
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	require.Equal(t, http.StatusConflict, resp.StatusCode)
 }
 
 func Test_Get_NotFound(t *testing.T) {

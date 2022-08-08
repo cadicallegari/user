@@ -14,6 +14,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
 require (

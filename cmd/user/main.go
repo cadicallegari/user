@@ -26,6 +26,8 @@ var (
 var cfg struct {
 	HTTP  xhttp.ServerConfig `envconfig:"HTTP"`
 	MySQL xmysql.Config      `envconfig:"MYSQL"`
+
+	PasswordGenerationCost int `envconfig:"PASSWORD_GENERATION_COST" default:"14"`
 }
 
 func main() {
@@ -50,7 +52,7 @@ func main() {
 	storage := mysql.NewStorage(db)
 	eventSvc := mem.NewEventService()
 
-	userSrv := user.NewService(storage, eventSvc)
+	userSrv := user.NewService(storage, eventSvc, cfg.PasswordGenerationCost)
 
 	r := xhttp.NewRouter(log)
 	r.Route("/", func(r chi.Router) {

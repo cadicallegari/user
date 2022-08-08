@@ -75,6 +75,11 @@ func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u, err := h.userSrv.Save(ctx, usrReq)
+	if err == user.ErrAlreadyExists {
+		xhttp.ResponseWithStatus(ctx, w, http.StatusConflict, nil)
+		return
+	}
+
 	if err != nil {
 		xlogger.Logger(ctx).WithError(err).Error("unable to save user")
 		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
@@ -115,6 +120,8 @@ func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
 		xhttp.ResponseWithStatus(ctx, w, http.StatusBadRequest, nil)
 		return
 	}
+
+	usrReq.ID = xhttp.URLParam(r, "id")
 
 	u, err := h.userSrv.Update(ctx, usrReq)
 	if err != nil {
