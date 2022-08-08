@@ -39,6 +39,14 @@ func NewStorage(db *sqlx.DB) *UserStorage {
 	}
 }
 
+func validateUser(u *user.User) error {
+	if u.ID == "" || u.Email == "" || u.EncodedPassword == "" || u.Country == "" || u.FirstName == "" {
+		return user.ErrInvalid
+	}
+
+	return nil
+}
+
 func (s *UserStorage) affectedRows(ctx context.Context, opts *user.ListOptions) chan uint64 {
 	totalCh := make(chan uint64)
 
@@ -144,6 +152,11 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 		usr.ID = uuid.NewString()
 	}
 
+	err := validateUser(usr)
+	if err != nil {
+		return nil, err
+	}
+
 	q := sq.Insert("users").
 		Columns(
 			"id",
@@ -171,7 +184,7 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 			country = u.country
 		`)
 
-	_, err := q.RunWith(s.db).ExecContext(ctx)
+	_, err = q.RunWith(s.db).ExecContext(ctx)
 	if err != nil {
 		xlogger.Logger(ctx).
 			WithField("query", sq.DebugSqlizer(q)).

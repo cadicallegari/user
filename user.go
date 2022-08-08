@@ -11,7 +11,8 @@ const (
 )
 
 var (
-	ErrNotFound = errors.New("user_not_found")
+	ErrNotFound = errors.New("not_found")
+	ErrInvalid  = errors.New("invalid")
 )
 
 type User struct {

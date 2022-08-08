@@ -24,7 +24,6 @@ target=builder make build
 
 ## TODO
 - encode passwd
-- test empty values
 - add health check
 - delete user on post message failures and add text on the readme about it
 - implement some event broker integration

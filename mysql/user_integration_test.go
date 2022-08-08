@@ -88,6 +88,16 @@ func (s *UserStorageSuite) Test_Create() {
 	}
 }
 
+func (s *UserStorageSuite) Test_Save_RequiredFields() {
+	u := user.User{
+		FirstName: "first name",
+	}
+
+	got, err := s.storage.Save(s.ctx, &u)
+	s.ErrorIs(err, user.ErrInvalid)
+	s.Nil(got)
+}
+
 func (s *UserStorageSuite) Test_Update() {
 	originalEmail := "email@mail.com"
 	originalUser := user.User{
