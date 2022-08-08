@@ -235,7 +235,6 @@ func (s *UserStorageSuite) Test_List() {
 			if s.NoError(err) {
 				s.Equal(tc.WantTotal, int(lr.Total))
 
-				fmt.Println(tc.Name, lr)
 				if tc.WantNextPage != 0 {
 					s.Equal(tc.WantNextPage, *lr.NextPage)
 				}

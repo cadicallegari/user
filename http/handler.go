@@ -17,6 +17,10 @@ type UserHandler struct {
 	userSrv user.Service
 }
 
+type contextKey string
+
+var userCtxKey = contextKey("user")
+
 func NewUserHandler(r chi.Router, userSvc user.Service) *UserHandler {
 	h := &UserHandler{
 		userSrv: userSvc,
@@ -34,6 +38,29 @@ func NewUserHandler(r chi.Router, userSvc user.Service) *UserHandler {
 	})
 
 	return h
+}
+
+func (h *UserHandler) loadUser(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		id := xhttp.URLParam(r, "id")
+
+		u, err := h.userSrv.Get(ctx, id)
+		if errors.Is(err, user.ErrNotFound) {
+			xhttp.ResponseWithStatus(ctx, w, http.StatusNotFound, nil)
+		}
+		if err != nil {
+			xlogger.Logger(ctx).WithError(err).Error("unable to fetch user")
+			xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
+			return
+		}
+
+		ctx = context.WithValue(ctx, userCtxKey, u)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+
+	return http.HandlerFunc(fn)
 }
 
 func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +90,7 @@ func (h *UserHandler) list(w http.ResponseWriter, r *http.Request) {
 	opts := user.NewListOptions()
 	err := xhttp.DecodeQuery(r, opts)
 	if err != nil {
-		xlogger.Logger(ctx).WithError(err).Error("unable to save parse request")
+		xlogger.Logger(ctx).WithError(err).Error("unable to decode request")
 		xhttp.ResponseWithStatus(ctx, w, http.StatusBadRequest, nil)
 		return
 	}
@@ -89,7 +116,7 @@ func (h *UserHandler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.userSrv.Save(ctx, usrReq)
+	u, err := h.userSrv.Update(ctx, usrReq)
 	if err != nil {
 		xlogger.Logger(ctx).WithError(err).Error("unable to update user")
 		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
@@ -118,31 +145,4 @@ func (h *UserHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, nil)
-}
-
-type contextKey string
-
-var userCtxKey = contextKey("user")
-
-func (h *UserHandler) loadUser(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		id := xhttp.URLParam(r, "id")
-
-		u, err := h.userSrv.Get(ctx, id)
-		if errors.Is(err, user.ErrNotFound) {
-			xhttp.ResponseWithStatus(ctx, w, http.StatusNotFound, nil)
-		}
-		if err != nil {
-			xlogger.Logger(ctx).WithError(err).Error("unable to fetch user")
-			xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
-			return
-		}
-
-		ctx = context.WithValue(ctx, userCtxKey, u)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-
-	return http.HandlerFunc(fn)
 }

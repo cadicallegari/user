@@ -52,6 +52,7 @@ type Service interface {
 	Get(_ context.Context, id string) (*User, error)
 	List(context.Context, *ListOptions) (*List, error)
 	Save(context.Context, *User) (*User, error)
+	Update(context.Context, *User) (*User, error)
 	Delete(context.Context, *User) error
 }
 
