@@ -175,16 +175,36 @@ func (s *UserStorage) Save(ctx context.Context, usr *user.User) (*user.User, err
 			usr.Email,
 			usr.EncodedPassword,
 			usr.Country,
-		).
-		Suffix(`AS u ON DUPLICATE KEY UPDATE
-			first_name = u.first_name,
-			last_name = u.last_name,
-			nickname = u.nickname,
-			encoded_password = u.encoded_password,
-			country = u.country
-		`)
-
+		)
 	_, err = q.RunWith(s.db).ExecContext(ctx)
+	if err != nil {
+		xlogger.Logger(ctx).
+			WithField("query", sq.DebugSqlizer(q)).
+			WithError(err).
+			Error("unable to save user")
+		return nil, err
+	}
+
+	return s.Get(ctx, usr.ID)
+}
+
+func (s *UserStorage) Update(ctx context.Context, usr *user.User) (*user.User, error) {
+	if usr.ID == "" {
+		return nil, user.ErrInvalid
+	}
+
+	q := sq.Update("users").
+		Set("first_name", usr.FirstName).
+		Set("last_name", usr.LastName).
+		Set("nickname", usr.Nickname).
+		Set("country", usr.Country).
+		Where(sq.Eq{"id": usr.ID})
+
+	if usr.EncodedPassword != "" {
+		q = q.Set("encoded_password", usr.EncodedPassword)
+	}
+
+	_, err := q.RunWith(s.db).ExecContext(ctx)
 	if err != nil {
 		xlogger.Logger(ctx).
 			WithField("query", sq.DebugSqlizer(q)).

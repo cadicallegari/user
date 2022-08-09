@@ -23,6 +23,7 @@ target=builder make build
 
 
 ## TODO
+- add update method to storage
 - add health check
 - dual write problem
 - implement some event broker integration

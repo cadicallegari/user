@@ -246,7 +246,7 @@ func Test_Update(t *testing.T) {
 		Return(u, nil)
 
 	suite.storageMock.EXPECT().
-		Save(gomock.Any(), u).
+		Update(gomock.Any(), u).
 		Return(u, nil)
 
 	suite.eventMock.EXPECT().

@@ -90,7 +90,7 @@ func Test_Update(t *testing.T) {
 
 	mockStorage := mock.NewStorage(ctrl)
 	mockStorage.EXPECT().
-		Save(gomock.Any(), usr).
+		Update(gomock.Any(), usr).
 		Return(usr, nil)
 
 	eventSvc := mock.NewEventService(ctrl)

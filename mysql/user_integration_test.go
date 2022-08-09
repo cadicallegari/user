@@ -132,7 +132,7 @@ func (s *UserStorageSuite) Test_Update() {
 		Country:         "DE",
 	}
 
-	gotUser, err = s.storage.Save(s.ctx, &userToUpdate)
+	gotUser, err = s.storage.Update(s.ctx, &userToUpdate)
 	if s.NoError(err) {
 		s.Equal(gotUser.ID, userToUpdate.ID)
 		s.Equal(gotUser.FirstName, userToUpdate.FirstName)

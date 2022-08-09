@@ -36,7 +36,6 @@ func (s *service) Get(ctx context.Context, id string) (*User, error) {
 }
 
 func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
-
 	l, err := s.List(ctx, &ListOptions{Search: usr.Email})
 	if err != nil {
 		return nil, err
@@ -80,7 +79,7 @@ func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
 		usr.Password = ""
 	}
 
-	u, err := s.storage.Save(ctx, usr)
+	u, err := s.storage.Update(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
