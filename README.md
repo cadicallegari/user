@@ -70,10 +70,10 @@ and run the service or tests setting `USER_MYSQL_URL` env var.
 
 # Integration and unit tests
 
-Having your local environment running locally, you can enter the container to run the tests with all dependencies already set.
+Having your local environment running, you can enter the container to run the tests with all dependencies already set.
 ```
 make exec
-make test // unit tests
+make test // unit tests also can run locally without any aditional configuration
 make integration-test // integration tests
 ```
 
@@ -89,21 +89,22 @@ make help
 
 The `pkg` directory contains a bunch of packages that help build services and are not related to the
 services domain. For reusability in multi-repo architecture,
-it should be moved to its repo and used as a dependency module.
+it should be moved to its repo and used as a dependency.
 
 ## Logging
 
 Logging is included in the `pkg` directory.
-The implementation extends the [logrus](https://github.com/sirupsen/logrus) package to add context logging features.
+The implementation extends logrus to add context logging features.
 
 You can configure log format and level through `USER_LOG_FORMATTER` and `USER_LOG_LEVEL` respectively.
 
 ## Migration
 
-Migrations is also included in the `pkg` directory.
-It makes easy to run integration tests, and they are also checked and run if needed when the service starts.
+Migrations is also included in the `pkg` directory along with more support for handling databases.
+The migrations can run automatically and are helpfull during integration tests.
 
 You can configure the directory where the migration is located through `USER_MYSQL_MIGRATIONS_DIR` env var.
+There are other configurations that can be set via env vars, check out `pkg/xdatabase/xsql/config.go` for more details.
 
 ## Pagination
 
@@ -120,12 +121,14 @@ The response for `GET /v1/users` is an object with the following fields
 }
 ```
 
-To navigate forward and backward into the data, the user must use the `next_page` and `prev_page` fields from the response.
+To navigate forward and backward into the data, the client must use the `next_page` and `prev_page` fields from the response.
 
 Example:
 
-> next page: /v1/users?page=3
-> prev page: /v1/users?page=1
+```
+next page: /v1/users?page=3
+prev page: /v1/users?page=1
+```
 
 ## Password encrypt
 
@@ -143,13 +146,13 @@ The system is ready to publish events after state changes in the users.
 For simplicity, none real event broker was used. There is only a dummy implementation of the `EventService` under the mem module.
 
 To give an example of a possible solution, each method in the `EventService` can publish in topics like
-`user.created`, `user.updated`, `user.deleted` respectivily.
+`user.created`, `user.updated`, `user.deleted` respectivily, in kafka, pubsub, nats or other solution.
 
 ### Dual write problem
 
 For simplicity, the current solution for publishing events has the dual write problem.
 
-Among other solutions for this problem, we can highlight two, `Listen yourself`and `Outbox pattern`.
+Among other solutions for this problem, we can highlight `Listen yourself`and `Outbox pattern`.
 
 # Deploy
 

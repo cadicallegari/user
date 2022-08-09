@@ -63,32 +63,6 @@ func (h *UserHandler) loadUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var usrReq *user.User
-	err := json.NewDecoder(r.Body).Decode(&usrReq)
-	if err != nil {
-		xlogger.Logger(ctx).WithError(err).Error("unable to decode request")
-		xhttp.ResponseWithStatus(ctx, w, http.StatusBadRequest, nil)
-		return
-	}
-
-	u, err := h.userSrv.Save(ctx, usrReq)
-	if err == user.ErrAlreadyExists {
-		xhttp.ResponseWithStatus(ctx, w, http.StatusConflict, nil)
-		return
-	}
-
-	if err != nil {
-		xlogger.Logger(ctx).WithError(err).Error("unable to save user")
-		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
-		return
-	}
-
-	xhttp.ResponseWithStatus(ctx, w, http.StatusCreated, u)
-}
-
 func (h *UserHandler) list(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -152,4 +126,30 @@ func (h *UserHandler) delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	xhttp.ResponseWithStatus(ctx, w, http.StatusOK, nil)
+}
+
+func (h *UserHandler) create(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var usrReq *user.User
+	err := json.NewDecoder(r.Body).Decode(&usrReq)
+	if err != nil {
+		xlogger.Logger(ctx).WithError(err).Error("unable to decode request")
+		xhttp.ResponseWithStatus(ctx, w, http.StatusBadRequest, nil)
+		return
+	}
+
+	u, err := h.userSrv.Save(ctx, usrReq)
+	if err == user.ErrAlreadyExists {
+		xhttp.ResponseWithStatus(ctx, w, http.StatusConflict, nil)
+		return
+	}
+
+	if err != nil {
+		xlogger.Logger(ctx).WithError(err).Error("unable to save user")
+		xhttp.ResponseWithStatus(ctx, w, http.StatusInternalServerError, nil)
+		return
+	}
+
+	xhttp.ResponseWithStatus(ctx, w, http.StatusCreated, u)
 }
