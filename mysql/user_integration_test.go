@@ -216,10 +216,11 @@ func (s *UserStorageSuite) Test_List() {
 			WantNextPage:  2,
 		},
 		{
-			Name:         "out_of_boud_page",
-			ListOptions:  &user.ListOptions{PerPage: 2, Page: 10},
-			WantTotal:    8,
-			WantPrevPage: 9,
+			Name:          "out_of_bound_page",
+			ListOptions:   &user.ListOptions{PerPage: 2, Page: 10},
+			WantPageUsers: []*user.User{},
+			WantTotal:     8,
+			WantPrevPage:  9,
 		},
 		{
 			Name:          "first_page_filter_by_country_uk",

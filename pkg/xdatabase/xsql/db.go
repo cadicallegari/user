@@ -13,10 +13,7 @@ import (
 )
 
 type (
-	DB        = sqlx.DB
-	Tx        = sqlx.Tx
-	NamedStmt = sqlx.NamedStmt
-	Rows      = sqlx.Rows
+	DB = sqlx.DB
 )
 
 func Open(driverName string, cfg *Config) (*DB, error) {
@@ -40,6 +37,7 @@ func Open(driverName string, cfg *Config) (*DB, error) {
 		// later, e.g. using WaitOK
 		return db, err
 	}
+
 	return db, nil
 }
 
@@ -59,8 +57,10 @@ func WaitOK(db *DB, errfn func(_ error, attempt int) bool) error {
 				return err
 			}
 		}
+
 		time.Sleep(time.Second * time.Duration(math.Pow(2, float64(attempt))))
 	}
+
 	return nil
 }
 

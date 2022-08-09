@@ -10,19 +10,13 @@ import (
 )
 
 type Config struct {
-	// URL do not put the database, use the field .Database otherwise.
 	URL string `envconfig:"URL"`
 
 	Charset string
 
-	// ConnMaxLifetime use < 0 to reuse connections forever.
 	ConnMaxLifetime time.Duration `envconfig:"CONN_MAX_LIFETIME" default:"1h"`
-
-	// MaxIdleConns use < 0 for no idle connections.
-	MaxIdleConns int `envconfig:"MAX_IDLE_CONNS" default:"1"`
-
-	// MaxOpenConns use < 0 for no limit on the number of open connections.
-	MaxOpenConns int `envconfig:"MAX_OPEN_CONNS" default:"10"`
+	MaxIdleConns    int           `envconfig:"MAX_IDLE_CONNS" default:"1"`
+	MaxOpenConns    int           `envconfig:"MAX_OPEN_CONNS" default:"10"`
 
 	RunMigration    bool   `envconfig:"RUN_MIGRATIONS" default:"true"`
 	MigrationsDir   string `envconfig:"MIGRATIONS_DIR"`
