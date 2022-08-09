@@ -13,8 +13,6 @@ param-%:
 export version?=latest
 export COMPOSE_PROJECT_NAME=cadicallegari
 
-
-
 build: param-version ## Build the docker image
 	docker-compose build
 
@@ -22,6 +20,12 @@ push: param-version ## Push the docker image to our private docker registry
 	docker-compose push
 
 # To be used internally or during the development
+
+dev-build: ## Build the dev docker image
+	target=builder $(MAKE) build
+
+create-network: ## create network required to run the docker environment
+	@docker network create cadicallegari_network
 
 up: ## Run the service on docker-compose locally
 	@docker-compose up -d
