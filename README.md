@@ -133,38 +133,71 @@ Currently, the encrypted password is not returned in the GET responses but can b
 The cost to generate the encrypted password can be configured using `USER_PASSWORD_GENERATION_COST` env var.
 
 ## Events
+
+The system is ready to publish events after state changes in the users.
+
+For simplicity, none real event broker was used. There is only a dummy implementation of the `EventService` under the mem module.
+
+To give an example of a possible solution, each method in the `EventService` can publish in topics like
+`user.created`, `user.updated`, `user.deleted` respectivily.
+
 ### Dual write problem
+
+The current solution for publishing events has the dual write problem.
+
+Among other solutions for this problem, we can highlight two, `Listen yourself`and `Outbox pattern`.
 
 # Deploy
 
-These make targets are normally called by CI to build the final image and publish to the docker registry.
+The artifact generated in the project is a docker image. It can be deployed in any container management system,
+like Kubernetes, Mesos, etc.
+
+The CI usually calls these makefile targets to build the final image and publish it to the docker registry.
 
 ```
 make build // build production ready image
 make push  // push the image to repository
 ```
 
-
-# Request examples
-
-# HTTP example requests
-
-> http GET localhost:8080/v1/users
-
-> echo '{"first_name": "Alice", "last_name": "Bob", "nickname": "AB123", "password": "supersecurepassword", "email": "alice@bob.com", "country": "UK"}' | \
-    http POST http://localhost:8080/v1/users
-
-> http GET localhost:8080/v1/users/1
-
-> echo '{"first_name": "Alice edite", "last_name": "Bob", "nickname": "AB123", "password": "supersecurepassword", "email": "alice@bob.com", "country": "UK"}' | \
-    http PUT http://localhost:8080/v1/users/1
-
-> http DELETE http://localhost:8080/v1/users/1
+After that, you can use the image in your container management system.
+This part is not covered in this project.
 
 
-http GET 'localhost:8080/v1/users?search=alice'
-http GET 'localhost:8080/v1/users?country=BR'
-http GET 'localhost:8080/v1/users?per_page=1&page=1'
+# HTTP request examples
 
+## Create user
+
+```
+curl -H "Content-Type: application/json" -X POST localhost:8080/v1/users \
+    -d '{"first_name": "Alice", "last_name": "Chains", "nickname": "AB123", "password": "supersecurepassword", "email": "alice@chains.com", "country": "UK"}'
+```
+
+## Get users
+
+```
+curl -X GET localhost:8080/v1/users
+curl -X GET localhost:8080/v1/users?search=alice
+curl -X GET localhost:8080/v1/users?country=BR
+curl -X GET localhost:8080/v1/users?per_page=1&page=1
+```
+
+## Get user
+
+```
+curl -X GET localhost:8080/v1/users/{user_id}
+```
+
+## Update user
+
+```
+curl -H "Content-Type: application/json" -X PUT localhost:8080/v1/users/{user_id} \
+    -d '{"first_name": "Alice", "last_name": "Bob", "nickname": "AB123", "password": "supersecurepassword", "email": "alice@bob.com", "country": "UK"}'
+```
+
+## Delete users
+
+```
+curl -X DELETE localhost:8080/v1/users
+```
 
 
