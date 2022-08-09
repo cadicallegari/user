@@ -59,7 +59,7 @@ func (s *service) Save(ctx context.Context, usr *User) (*User, error) {
 		return nil, err
 	}
 
-	// TODO: add something about dual write
+	// dual write problem, can be solved using listen yourself or outbox pattern for example
 
 	err = s.eventService.UserCreated(ctx, u)
 	if err != nil {
@@ -84,7 +84,7 @@ func (s *service) Update(ctx context.Context, usr *User) (*User, error) {
 		return nil, err
 	}
 
-	// TODO: add something about dual write
+	// dual write problem, can be solved using listen yourself or outbox pattern for example
 
 	err = s.eventService.UserUpdated(ctx, u)
 	if err != nil {
@@ -100,7 +100,7 @@ func (s *service) Delete(ctx context.Context, usr *User) error {
 		return err
 	}
 
-	// TODO: add something about dual write
+	// dual write problem, can be solved using listen yourself or outbox pattern for example
 
 	err = s.eventService.UserDeleted(ctx, usr)
 	if err != nil {

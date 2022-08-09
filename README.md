@@ -1,5 +1,5 @@
 user
------------------------
+===============
 
 # Run locally
 
@@ -22,15 +22,19 @@ target=builder make build
 > http DELETE http://localhost:8080/v1/users/1
 
 
+http GET 'localhost:8080/v1/users?search=alice'
+http GET 'localhost:8080/v1/users?country=BR'
+http GET 'localhost:8080/v1/users?per_page=1&page=1'
+
+
 ## TODO
-- add update method to storage
-- add health check
-- dual write problem
-- implement some event broker integration
-- mention migrations dir
+- start the service from scratch and also run tests
 
-- midlewares
-    https://pkg.go.dev/github.com/go-chi/chi/middleware#CleanPath
-    https://pkg.go.dev/github.com/go-chi/chi/middleware#Heartbeat
-
+- readme
+    - dual write problem
+    - mention migrations dir
+    - pagination
+    - encrypt algorithm
+    - logs
+    - pkg
 

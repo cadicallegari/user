@@ -112,6 +112,9 @@ func NewRouter(log *logrus.Entry) *Router {
 		Router: chi.NewMux(),
 	}
 
+	r.Use(middleware.CleanPath)
+	r.Use(middleware.Heartbeat("/ping"))
+
 	if log != nil {
 		r.Use(loggerMiddleware(log))
 	}
