@@ -2,6 +2,7 @@ package xlogger
 
 import (
 	"context"
+	"os"
 
 	"github.com/sirupsen/logrus"
 )
@@ -14,13 +15,49 @@ type contextKey struct {
 	key string
 }
 
-func (ctx contextKey) String() string {
-	return "xlogger: " + ctx.key
+type Config struct {
+	Formatter map[string]string `envconfig:"FORMATTER"`
+	Level     string            `envconfig:"LEVEL"`
 }
 
 var (
 	loggerKey = &contextKey{"logger"}
 )
+
+func (cfg *Config) setDefault() {
+	if cfg.Level == "" {
+		cfg.Level = "info"
+	}
+}
+
+func New(cfg *Config) *logrus.Logger {
+	if cfg == nil {
+		cfg = new(Config)
+	}
+	cfg.setDefault()
+
+	log := logrus.StandardLogger()
+	log.SetOutput(os.Stdout)
+
+	var fmtter logrus.Formatter
+	if typ, ok := cfg.Formatter["type"]; ok && typ == "text" {
+		fmtter = &logrus.TextFormatter{}
+	} else {
+		fmtter = &logrus.JSONFormatter{}
+	}
+
+	log.SetFormatter(fmtter)
+
+	if lvl, err := logrus.ParseLevel(cfg.Level); err == nil {
+		log.SetLevel(lvl)
+	}
+
+	return log
+}
+
+func (ctx contextKey) String() string {
+	return "xlogger: " + ctx.key
+}
 
 func contextLogger(ctx context.Context) *logrus.Entry {
 	log, _ := ctx.Value(loggerKey).(*logrus.Entry)

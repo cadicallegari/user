@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/sirupsen/logrus"
@@ -13,6 +11,7 @@ import (
 	"github.com/cadicallegari/user/mysql"
 	"github.com/cadicallegari/user/pkg/xdatabase/xsql/xmysql"
 	"github.com/cadicallegari/user/pkg/xhttp"
+	"github.com/cadicallegari/user/pkg/xlogger"
 	"github.com/cadicallegari/user/pkg/xsignal"
 )
 
@@ -24,8 +23,9 @@ var (
 )
 
 var cfg struct {
-	HTTP  xhttp.ServerConfig `envconfig:"HTTP"`
-	MySQL xmysql.Config      `envconfig:"MYSQL"`
+	Logger xlogger.Config     `envconfig:"LOG"`
+	HTTP   xhttp.ServerConfig `envconfig:"HTTP"`
+	MySQL  xmysql.Config      `envconfig:"MYSQL"`
 
 	PasswordGenerationCost int `envconfig:"PASSWORD_GENERATION_COST" default:"14"`
 }
@@ -33,12 +33,10 @@ var cfg struct {
 func main() {
 	envconfig.MustProcess("user", &cfg)
 
-	logger := logrus.StandardLogger()
-	logger.SetOutput(os.Stdout)
-
-	log := logger.WithFields(
+	log := xlogger.New(&cfg.Logger).WithFields(
 		logrus.Fields{"tag": tag, "git_commit": gitCommit},
 	)
+
 	cfg.MySQL.Logger = log
 
 	db, err := xmysql.Connect(&cfg.MySQL)

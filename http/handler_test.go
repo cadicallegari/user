@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,10 +32,7 @@ type userTestSuite struct {
 func serviceWithMocks(t *testing.T, ctrl *gomock.Controller) userTestSuite {
 	var s userTestSuite
 
-	logger := logrus.StandardLogger()
-	logger.SetOutput(io.Discard)
-
-	s.log = logger.WithFields(nil)
+	s.log = xlogger.New(nil).WithFields(nil)
 	s.ctx = xlogger.SetLogger(context.TODO(), s.log)
 	s.storageMock = mock.NewStorage(ctrl)
 	s.eventMock = mock.NewEventService(ctrl)

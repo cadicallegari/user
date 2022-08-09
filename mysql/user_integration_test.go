@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cadicallegari/user"
@@ -38,8 +37,7 @@ func (s *UserStorageSuite) SetupTest() {
 	s.storage = mysql.NewStorage(s.DB)
 
 	ctx := context.Background()
-	logger := logrus.StandardLogger()
-	s.ctx = xlogger.SetLogger(ctx, logger.WithField("test", "test"))
+	s.ctx = xlogger.SetLogger(ctx, xlogger.New(nil).WithField("test", "test"))
 }
 
 func (s *UserStorageSuite) Test_Get_NotFound() {

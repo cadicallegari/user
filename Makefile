@@ -25,7 +25,7 @@ dev-build: ## Build the dev docker image
 	target=builder $(MAKE) build
 
 create-network: ## create network required to run the docker environment
-	@docker network create cadicallegari_network
+	@docker network create cadicallegari_network 2> /dev/null || exit 0
 
 up: ## Run the service on docker-compose locally
 	@docker-compose up -d

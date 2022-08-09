@@ -12,7 +12,8 @@ services:
     environment:
       USER_MYSQL_MIGRATIONS_DIR: /etc/migrations
       USER_MYSQL_URL: root:root@tcp(mysql:3306)/user?parseTime=true&multiStatements=true
-      USER_LOG_FORMATTER: type:text,disable_timestamp:true
+      USER_LOG_FORMATTER: type:text
+      USER_LOG_LEVEL: DEBUG
     command:
       - sh
       - -c

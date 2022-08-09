@@ -22,6 +22,26 @@ The project structure is composed of the following structure
 
 # Run locally
 
+TL;DR
+
+First
+```
+make create-network dev-build up
+```
+
+Mysql container might take a minute or so to get ready
+
+Enter into the container to run the tests
+```
+make exec
+```
+
+Then run the integration tests
+```
+make integration-test
+```
+
+
 You can run the project locally and also run integration tests using docker-compose.
 You will need to create the network and build the dev image if it is your first time running it
 running the following make targets.
@@ -36,28 +56,21 @@ To start the dependencies like database you can use target
 make up
 ```
 
-The database is not mapped to a host port, you can enter in the container to run the integration tests using the following
-```
-make up
-```
-
 For helping with debug you can access phpadmin instance to check your database at address
 > http://localhost:3006
 > username: root
 > password: root
 
-You always change the docker-compose file to map the database in your host if you preffer.
+You can always change the docker-compose file to map the database in your host if you preffer,
+and run the service or tests setting `USER_MYSQL_URL` env var.
 
-
-# Integration tests
+# Integration and unit tests
 
 Having your local environment running locally, you can enter the container to run the tests with all dependencies already set.
 ```
 make exec
-
-make integration-test // integration tests
-
 make test // unit tests
+make integration-test // integration tests
 ```
 
 You can find more options running the make help target
@@ -70,12 +83,57 @@ make help
 
 ## pkg module
 
+The `pkg` directory contains a bunch of packages that help build services and are not related to the
+services domain. For reusability in multi-repo architecture,
+it should be moved to its repo and used as a dependency module.
 
 ## Logging
+
+Logging is included in the `pkg` directory.
+The implementation extends the [logrus](https://github.com/sirupsen/logrus) package to add context logging features.
+
+You can configure log format and level through `USER_LOG_FORMATTER` and `USER_LOG_LEVEL` respectively.
+
 ## Migration
-## Dual write problem
+
+Migrations is also included in the `pkg` directory.
+It makes easy to run integration tests, and they are also checked and run if needed when the service starts.
+
+You can configure the directory where the migration is located through `USER_MYSQL_MIGRATIONS_DIR` env var.
+
 ## Pagination
+
+The pagination uses simple `page` and `per_page` method.
+
+The response for `GET /v1/users` is an object with the following fields
+
+```
+{
+    "next_page": 3,
+    "prev_page": 1,
+    "total": 200,
+    "users": [...]
+}
+```
+
+To navigate forward and backward into the data, the user must use the `next_page` and `prev_page` fields from the response.
+
+Example:
+
+> next page: /v1/users?page=3
+> prev page: /v1/users?page=1
+
 ## Password encrypt
+
+The password received in the request body is encrypted using bcrypt algorithm.
+The plain text password is discarded and only the encrypted value is stored in the database.
+
+Currently, the encrypted password is not returned in the GET responses but can be easily added, dependent on the use cases.
+
+The cost to generate the encrypted password can be configured using `USER_PASSWORD_GENERATION_COST` env var.
+
+## Events
+### Dual write problem
 
 # Deploy
 

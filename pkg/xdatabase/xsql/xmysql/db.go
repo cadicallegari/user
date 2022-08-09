@@ -42,6 +42,7 @@ func Connect(cfg *Config) (*xsql.DB, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			return Connect(cfg)
 		}
 		if db == nil {
