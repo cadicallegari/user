@@ -28,10 +28,15 @@ create-network: ## create network required to run the docker environment
 	@docker network create cadicallegari_network 2> /dev/null || exit 0
 
 up: ## Run the service on docker-compose locally
+	@docker-compose up -d mysql && sleep 10
 	@docker-compose up -d
 
 down: ## Stop the service on docker-compose locally
 	@docker-compose down
+
+# up-user:
+
+# down-user:
 
 export GIT_TAG ?= $(shell git describe --tags --exact-match 2> /dev/null || git symbolic-ref -q --short HEAD)
 export GIT_COMMIT ?= $(shell git rev-parse --short HEAD)

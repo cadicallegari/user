@@ -22,16 +22,19 @@ The project structure is composed of the following structure
 
 # Run locally
 
-TL;DR
+### TL;DR
 
 First
 ```
 make create-network dev-build up
 ```
 
-Mysql container might take a minute or so to get ready
+After the previous command, the service is running in the docker containers and
+accessible in the port 8080.
+> http://localhost:8080
 
-Enter into the container to run the tests
+
+Entering into the container to run the tests
 ```
 make exec
 ```
@@ -41,6 +44,7 @@ Then run the integration tests
 make integration-test
 ```
 
+### Explanation
 
 You can run the project locally and also run integration tests using docker-compose.
 You will need to create the network and build the dev image if it is your first time running it
@@ -143,7 +147,7 @@ To give an example of a possible solution, each method in the `EventService` can
 
 ### Dual write problem
 
-The current solution for publishing events has the dual write problem.
+For simplicity, the current solution for publishing events has the dual write problem.
 
 Among other solutions for this problem, we can highlight two, `Listen yourself`and `Outbox pattern`.
 
@@ -175,10 +179,10 @@ curl -H "Content-Type: application/json" -X POST localhost:8080/v1/users \
 ## Get users
 
 ```
-curl -X GET localhost:8080/v1/users
-curl -X GET localhost:8080/v1/users?search=alice
-curl -X GET localhost:8080/v1/users?country=BR
-curl -X GET localhost:8080/v1/users?per_page=1&page=1
+curl -X GET 'localhost:8080/v1/users'
+curl -X GET 'localhost:8080/v1/users?search=alice'
+curl -X GET 'localhost:8080/v1/users?country=BR'
+curl -X GET 'localhost:8080/v1/users?per_page=1&page=1'
 ```
 
 ## Get user

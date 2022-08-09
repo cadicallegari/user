@@ -116,6 +116,7 @@ func (s *UserStorage) List(ctx context.Context, opts *user.ListOptions) (*user.L
 	defer rows.Close()
 
 	list := new(user.List)
+	list.Users = make([]*user.User, 0)
 
 	for rows.Next() {
 		var u user.User
